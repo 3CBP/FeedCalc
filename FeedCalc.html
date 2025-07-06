@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Feed Mix Calculator</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 900px; margin: auto; }
+    h2 { margin-top: 30px; }
+    label, input { margin-top: 10px; display: block; }
+    input[type="text"], input[type="number"] { padding: 5px; width: 200px; margin-right: 10px; }
+    .group, .ingredient { margin-bottom: 15px; }
+    button { margin: 10px 5px; padding: 8px 12px; }
+    #results { margin-top: 30px; white-space: pre-line; font-family: monospace; background: #f0f0f0; padding: 20px; }
+  </style>
+</head>
+<body>
+  <h1>🐄 Feed Mix Calculator</h1>
+
+  <h2>Cow Groups</h2>
+  <div id="groups">
+    <div class="group">
+      <input type="text" placeholder="Group Name" />
+      <input type="number" placeholder="Head Count" />
+    </div>
+  </div>
+  <button onclick="addGroup()">➕ Add Group</button>
+
+  <h2>Ingredients</h2>
+  <div id="ingredients">
+    <div class="ingredient">
+      <input type="text" placeholder="Ingredient Name" />
+      <input type="number" placeholder="Lbs per Cow" />
+      <input type="number" placeholder="Cost per lb ($)" step="0.01" />
+    </div>
+  </div>
+  <button onclick="addIngredient()">➕ Add Ingredient</button>
+
+  <div id="results"></div>
+
+  <script>
+    const groupsDiv = document.getElementById("groups");
+    const ingredientsDiv = document.getElementById("ingredients");
+    const resultsDiv = document.getElementById("results");
+
+    function addGroup() {
+      const div = document.createElement("div");
+      div.className = "group";
+      div.innerHTML = `
+        <input type="text" placeholder="Group Name" />
+        <input type="number" placeholder="Head Count" />
+      `;
+      groupsDiv.appendChild(div);
+      attachListeners();
+    }
+
+    function addIngredient() {
+      const div = document.createElement("div");
+      div.className = "ingredient";
+      div.innerHTML = `
+        <input type="text" placeholder="Ingredient Name" />
+        <input type="number" placeholder="Lbs per Cow" />
+        <input type="number" placeholder="Cost per lb ($)" step="0.01" />
+      `;
+      ingredientsDiv.appendChild(div);
+      attachListeners();
+    }
+
+    function attachListeners() {
+      document.querySelectorAll("input").forEach(input => {
+        input.removeEventListener("input", calculate);
+        input.addEventListener("input", calculate);
+      });
+    }
+
+    function calculate() {
+      const groups = Array.from(document.querySelectorAll(".group")).map(div => {
+        const [nameInput, countInput] = div.querySelectorAll("input");
+        return {
+          name: nameInput.value || "(Unnamed Group)",
+          count: parseInt(countInput.value) || 0
+        };
+      });
+
+      const ingredients = Array.from(document.querySelectorAll(".ingredient")).map(div => {
+        const [nameInput, lbsInput, costInput] = div.querySelectorAll("input");
+        return {
+          name: nameInput.value,
+          lbsPerCow: parseFloat(lbsInput.value) || 0,
+          costPerLb: parseFloat(costInput.value) || 0
+        };
+      });
+
+      let results = "";
+      const totals = {};
+
+      groups.forEach(group => {
+        results += `${group.name} (${group.count} cows)\n`;
+        ingredients.forEach(ing => {
+          const totalLbs = ing.lbsPerCow * group.count;
+          const totalCost = totalLbs * ing.costPerLb;
+          results += `- ${ing.name}: ${totalLbs.toFixed(2)} lbs ($${totalCost.toFixed(2)})\n`;
+
+          if (!totals[ing.name]) totals[ing.name] = { lbs: 0, cost: 0 };
+          totals[ing.name].lbs += totalLbs;
+          totals[ing.name].cost += totalCost;
+        });
+        results += `\n`;
+      });
+
+      results += `TOTALS\n`;
+      Object.entries(totals).forEach(([name, data]) => {
+        results += `- ${name}: ${data.lbs.toFixed(2)} lbs ($${data.cost.toFixed(2)})\n`;
+      });
+
+      resultsDiv.textContent = results;
+    }
+
+    // Initial attach
+    attachListeners();
+  </script>
+</body>
+</html>
