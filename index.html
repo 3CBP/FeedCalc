@@ -2,25 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Cow Feed Ration Calculator</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="apple-touch-icon" href="logo.jpeg">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feed Ration Calculator</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <img src="logo.jpeg" alt="Logo" id="logo">
-  <h1>Cow Feed Ration Calculator</h1>
+  <header>
+    <img src="logo.jpeg" alt="Logo" id="logo" />
+    <h1>Feed Ration Calculator</h1>
+  </header>
 
-  <div id="groups"></div>
-  <button onclick="addGroup()">➕ Add Cow Group</button><br><br>
+  <main>
+    <!-- Forage Group -->
+    <section class="group">
+      <h2>Forage</h2>
+      <div class="ingredient">
+        <label>Alfalfa (lb): <input type="number" class="feed" data-dm="0.9" /></label>
+      </div>
+      <div class="ingredient">
+        <label>Grass Hay (lb): <input type="number" class="feed" data-dm="0.85" /></label>
+      </div>
+    </section>
 
-  <button onclick="calculateTotal()">🧮 Calculate Total Batch</button>
-  <button onclick="print()">🖨️ Print</button><br><br>
-
-  <div id="results"></div>
-
-  <script src="script.js"></script>
-</body>
-</html>
+    <!-- Grain Group -->
+    <section class="group">
+      <h2>Grain</h2>
+      <div class="ingredient">
+        <label>Corn (lb
