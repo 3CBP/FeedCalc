@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Feed Mix Calculator</title>
   <style>
     body {
@@ -39,10 +38,12 @@
       background: #f0f0f0;
       padding: 20px;
       font-size: 20px;
+      color: black;
+      display: none;
     }
     #results strong {
       font-weight: bold;
-      font-size: 22px;
+      font-size: 24px;
       display: block;
       margin-top: 10px;
     }
@@ -52,7 +53,7 @@
       }
       #results {
         font-size: 18pt;
-        color: black;
+        display: block;
       }
     }
     @media (max-width: 600px) {
@@ -62,16 +63,12 @@
       #results {
         font-size: 22px;
       }
-      #results strong {
-        font-size: 24px;
-      }
     }
   </style>
 </head>
 <body>
   <img src="logo.jpeg" alt="Farm Logo" style="max-width: 150px; margin-bottom: 20px;" />
   <h1>🐄 Feed Mix Calculator</h1>
-
   <h2>Mix Name & Date</h2>
   <input type="text" id="mixName" placeholder="Enter mix name" />
   <input type="text" id="mixDate" placeholder="Date" />
@@ -101,135 +98,32 @@
     const mixDateInput = document.getElementById("mixDate");
     const savedMixesSelect = document.getElementById("savedMixes");
 
-    function addGroup(name = "", count = "") {
+    function addGroup() {
       const div = document.createElement("div");
       div.className = "group";
       div.innerHTML = `
-        <input type="text" placeholder="Group Name" value="${name}" />
-        <input type="number" placeholder="Head Count" value="${count}" />
+        <input type="text" placeholder="Group name" />
+        <input type="number" placeholder="Count" min="1" />
+        <button onclick="this.parentElement.remove()">🗑️</button>
       `;
       groupsDiv.appendChild(div);
-      attachListeners();
     }
 
-    function addIngredient(name = "", lbs = "", cost = "") {
+    function addIngredient() {
       const div = document.createElement("div");
       div.className = "ingredient";
       div.innerHTML = `
-        <input type="text" placeholder="Ingredient Name" value="${name}" />
-        <input type="number" placeholder="Lbs per Cow" value="${lbs}" />
-        <input type="number" placeholder="Cost per lb ($)" step="0.01" value="${cost}" />
+        <input type="text" placeholder="Ingredient name" />
+        <input type="number" placeholder="Kg per cow" min="0" step="any" />
+        <button onclick="this.parentElement.remove()">🗑️</button>
       `;
       ingredientsDiv.appendChild(div);
-      attachListeners();
-    }
-
-    function attachListeners() {
-      document.querySelectorAll("input").forEach(input => {
-        input.removeEventListener("input", handleChange);
-        input.addEventListener("input", handleChange);
-      });
-    }
-
-    function handleChange() {
-      calculate();
-      saveToLocal();
-    }
-
-    function calculate() {
-      const mixName = mixNameInput.value.trim();
-      const mixDate = mixDateInput.value.trim();
-
-      const groups = Array.from(groupsDiv.querySelectorAll(".group")).map(div => {
-        const [nameInput, countInput] = div.querySelectorAll("input");
-        return {
-          name: nameInput.value || "(Unnamed Group)",
-          count: parseInt(countInput.value) || 0
-        };
-      });
-
-      const ingredients = Array.from(ingredientsDiv.querySelectorAll(".ingredient")).map(div => {
-        const [nameInput, lbsInput, costInput] = div.querySelectorAll("input");
-        return {
-          name: nameInput.value || "(Unnamed Ingredient)",
-          lbsPerCow: parseFloat(lbsInput.value) || 0,
-          costPerLb: parseFloat(costInput.value) || 0
-        };
-      });
-
-      let results = "";
-      if (mixName) results += `MIX NAME: ${mixName}\n`;
-      if (mixDate) results += `DATE: ${mixDate}\n\n`;
-
-      const totals = {};
-
-      ingredients.forEach(ing => {
-        results += `${ing.name.toUpperCase()}\n`;
-        let ingLbs = 0;
-        let ingCost = 0;
-
-        groups.forEach(group => {
-          const totalLbs = ing.lbsPerCow * group.count;
-          const totalCost = totalLbs * ing.costPerLb;
-          ingLbs += totalLbs;
-          ingCost += totalCost;
-          results += `- ${group.name}: ${totalLbs.toFixed(2)} lbs ($${totalCost.toFixed(2)})\n`;
-        });
-
-        results += `<strong>▶ TOTAL ${ing.name.toUpperCase()}: ${ingLbs.toFixed(2)} lbs ($${ingCost.toFixed(2)})</strong>\n\n`;
-        totals[ing.name] = { lbs: ingLbs, cost: ingCost };
-      });
-
-      results += `OVERALL TOTALS\n`;
-      Object.entries(totals).forEach(([name, data]) => {
-        results += `- ${name}: ${data.lbs.toFixed(2)} lbs ($${data.cost.toFixed(2)})\n`;
-      });
-
-      resultsDiv.innerHTML = results.replace(/<strong>(.*?)<\/strong>/g, "<strong>$1</strong>");
-    }
-
-    function saveResults() {
-      const blob = new Blob([resultsDiv.textContent], { type: "text/plain" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "feed-mix-results.txt";
-      link.click();
-    }
-
-    function setTodayDate() {
-      if (!mixDateInput.value) {
-        const today = new Date().toISOString().split("T")[0];
-        mixDateInput.value = today;
-      }
-    }
-
-    function saveToLocal() {
-      const data = collectMixData();
-      localStorage.setItem("feedMix_active", JSON.stringify(data));
-    }
-
-    function loadFromLocal() {
-      const data = JSON.parse(localStorage.getItem("feedMix_active") || "{}");
-      if (data.mixName) mixNameInput.value = data.mixName;
-      if (data.mixDate) mixDateInput.value = data.mixDate;
-      else setTodayDate();
-
-      groupsDiv.innerHTML = "";
-      (data.groups || []).forEach(g => addGroup(g[0], g[1]));
-      if (!data.groups) addGroup();
-
-      ingredientsDiv.innerHTML = "";
-      (data.ingredients || []).forEach(i => addIngredient(i[0], i[1], i[2]));
-      if (!data.ingredients) addIngredient();
-
-      attachListeners();
-      calculate();
     }
 
     function collectMixData() {
       return {
-        mixName: mixNameInput.value,
-        mixDate: mixDateInput.value,
+        name: mixNameInput.value,
+        date: mixDateInput.value,
         groups: Array.from(groupsDiv.querySelectorAll(".group")).map(div =>
           Array.from(div.querySelectorAll("input")).map(input => input.value)
         ),
@@ -248,4 +142,66 @@
       alert("Mix saved as: " + name);
     }
 
-    [A](https://github.com/Ronnie434/30-days-of-React/tree/22142106cb46f717a1259f84227cc90ed7fe50cc/02_Day_Introduction_to_React%2F02_introduction_to_react.md?copilot_analytics_metadata=eyJldmVudEluZm9fbWVzc2FnZUlkIjoiTUpNd1VWVmEyRlE5eVZHYjN3M2Z6IiwiZXZlbnRJbmZvX2NsaWNrU291cmNlIjoiY2l0YXRpb25MaW5rIiwiZXZlbnRJbmZvX2NsaWNrRGVzdGluYXRpb24iOiJodHRwczpcL1wvZ2l0aHViLmNvbVwvUm9ubmllNDM0XC8zMC1kYXlzLW9mLVJlYWN0XC90cmVlXC8yMjE0MjEwNmNiNDZmNzE3YTEyNTlmODQyMjdjYzkwZWQ3ZmU1MGNjXC8wMl9EYXlfSW50cm9kdWN0aW9uX3RvX1JlYWN0JTJGMDJfaW50cm9kdWN0aW9uX3RvX3JlYWN0Lm1kIiwiZXZlbnRJbmZvX2NvbnZlcnNhdGlvbklkIjoiZzl6TGV5cnFYM3NzNzNuOHlkUTZTIn0%3D&citationMarker=9F742443-6C92-4C44-BF58-8F5A7C53B6F1)
+    function updateSavedMixList() {
+      const mixes = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith("feedMix_")) {
+          mixes.push(key.replace("feedMix_", ""));
+        }
+      }
+      savedMixesSelect.innerHTML = '<option value="">-- Load a Saved Mix --</option>';
+      mixes.forEach(mix => {
+        const option = document.createElement("option");
+        option.value = mix;
+        option.textContent = mix;
+        savedMixesSelect.appendChild(option);
+      });
+    }
+
+    function loadNamedMix() {
+      const name = savedMixesSelect.value;
+      if (!name) return;
+      const data = JSON.parse(localStorage.getItem("feedMix_" + name));
+      if (!data) return;
+      mixNameInput.value = data.name || "";
+      mixDateInput.value = data.date || "";
+      groupsDiv.innerHTML = "";
+      (data.groups || []).forEach(vals => {
+        const div = document.createElement("div");
+        div.className = "group";
+        div.innerHTML = `
+          <input type="text" placeholder="Group name" value="${vals[0] || ""}" />
+          <input type="number" placeholder="Count" min="1" value="${vals[1] || ""}" />
+          <button onclick="this.parentElement.remove()">🗑️</button>
+        `;
+        groupsDiv.appendChild(div);
+      });
+      ingredientsDiv.innerHTML = "";
+      (data.ingredients || []).forEach(vals => {
+        const div = document.createElement("div");
+        div.className = "ingredient";
+        div.innerHTML = `
+          <input type="text" placeholder="Ingredient name" value="${vals[0] || ""}" />
+          <input type="number" placeholder="Kg per cow" min="0" step="any" value="${vals[1] || ""}" />
+          <button onclick="this.parentElement.remove()">🗑️</button>
+        `;
+        ingredientsDiv.appendChild(div);
+      });
+    }
+
+    function saveResults() {
+      const text = resultsDiv.textContent.trim();
+      if (!text) return alert("Nothing to save.");
+      const a = document.createElement("a");
+      a.href = "data:text/plain;charset=utf-8," + encodeURIComponent(text);
+      a.download = (mixNameInput.value || "results") + ".txt";
+      a.click();
+    }
+
+    // On page load
+    updateSavedMixList();
+
+  </script>
+</body>
+</html>
