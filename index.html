@@ -1,207 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Feed Mix Calculator</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 900px;
-      margin: auto;
-      font-size: 20px;
-    }
-    h1, h2 {
-      font-size: 28px;
-      margin-top: 30px;
-    }
-    input[type="text"], input[type="number"], select {
-      padding: 12px;
-      font-size: 18px;
-      width: 100%;
-      margin: 10px 0;
-      box-sizing: border-box;
-    }
-    button {
-      font-size: 18px;
-      padding: 12px 16px;
-      margin: 10px 5px;
-      cursor: pointer;
-    }
-    .group, .ingredient {
-      margin-bottom: 15px;
-    }
-    #results {
-      margin-top: 30px;
-      white-space: pre-line;
-      font-family: monospace;
-      background: #f0f0f0;
-      padding: 20px;
-      font-size: 20px;
-      color: black;
-      display: none;
-    }
-    #results strong {
-      font-weight: bold;
-      font-size: 24px;
-      display: block;
-      margin-top: 10px;
-    }
-    @media print {
-      input, button, .group, .ingredient, select {
-        display: none;
-      }
-      #results {
-        font-size: 18pt;
-        display: block;
-      }
-    }
-    @media (max-width: 600px) {
-      body {
-        font-size: 22px;
-      }
-      #results {
-        font-size: 22px;
-      }
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Cow Feed Ration Calculator</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="apple-touch-icon" href="logo.jpeg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
 </head>
 <body>
-  <img src="logo.jpeg" alt="Farm Logo" style="max-width: 150px; margin-bottom: 20px;" />
-  <h1>🐄 Feed Mix Calculator</h1>
-  <h2>Mix Name & Date</h2>
-  <input type="text" id="mixName" placeholder="Enter mix name" />
-  <input type="text" id="mixDate" placeholder="Date" />
-  <button onclick="saveNamedMix()">💾 Save Named Mix</button>
-  <select id="savedMixes" onchange="loadNamedMix()">
-    <option value="">-- Load a Saved Mix --</option>
-  </select>
+  <img src="logo.jpeg" alt="Logo" id="logo">
+  <h1>Cow Feed Ration Calculator</h1>
 
-  <h2>Cow Groups</h2>
   <div id="groups"></div>
-  <button onclick="addGroup()">➕ Add Group</button>
+  <button onclick="addGroup()">➕ Add Cow Group</button><br><br>
 
-  <h2>Ingredients</h2>
-  <div id="ingredients"></div>
-  <button onclick="addIngredient()">➕ Add Ingredient</button>
+  <button onclick="calculateTotal()">🧮 Calculate Total Batch</button>
+  <button onclick="print()">🖨️ Print</button><br><br>
 
-  <h2>Results</h2>
   <div id="results"></div>
-  <button onclick="saveResults()">💾 Save Results</button>
-  <button onclick="window.print()">🖨️ Print</button>
 
-  <script>
-    const groupsDiv = document.getElementById("groups");
-    const ingredientsDiv = document.getElementById("ingredients");
-    const resultsDiv = document.getElementById("results");
-    const mixNameInput = document.getElementById("mixName");
-    const mixDateInput = document.getElementById("mixDate");
-    const savedMixesSelect = document.getElementById("savedMixes");
-
-    function addGroup() {
-      const div = document.createElement("div");
-      div.className = "group";
-      div.innerHTML = `
-        <input type="text" placeholder="Group name" />
-        <input type="number" placeholder="Count" min="1" />
-        <button onclick="this.parentElement.remove()">🗑️</button>
-      `;
-      groupsDiv.appendChild(div);
-    }
-
-    function addIngredient() {
-      const div = document.createElement("div");
-      div.className = "ingredient";
-      div.innerHTML = `
-        <input type="text" placeholder="Ingredient name" />
-        <input type="number" placeholder="Kg per cow" min="0" step="any" />
-        <button onclick="this.parentElement.remove()">🗑️</button>
-      `;
-      ingredientsDiv.appendChild(div);
-    }
-
-    function collectMixData() {
-      return {
-        name: mixNameInput.value,
-        date: mixDateInput.value,
-        groups: Array.from(groupsDiv.querySelectorAll(".group")).map(div =>
-          Array.from(div.querySelectorAll("input")).map(input => input.value)
-        ),
-        ingredients: Array.from(ingredientsDiv.querySelectorAll(".ingredient")).map(div =>
-          Array.from(div.querySelectorAll("input")).map(input => input.value)
-        )
-      };
-    }
-
-    function saveNamedMix() {
-      const name = mixNameInput.value.trim();
-      if (!name) return alert("Please enter a mix name first.");
-      const data = collectMixData();
-      localStorage.setItem("feedMix_" + name, JSON.stringify(data));
-      updateSavedMixList();
-      alert("Mix saved as: " + name);
-    }
-
-    function updateSavedMixList() {
-      const mixes = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.startsWith("feedMix_")) {
-          mixes.push(key.replace("feedMix_", ""));
-        }
-      }
-      savedMixesSelect.innerHTML = '<option value="">-- Load a Saved Mix --</option>';
-      mixes.forEach(mix => {
-        const option = document.createElement("option");
-        option.value = mix;
-        option.textContent = mix;
-        savedMixesSelect.appendChild(option);
-      });
-    }
-
-    function loadNamedMix() {
-      const name = savedMixesSelect.value;
-      if (!name) return;
-      const data = JSON.parse(localStorage.getItem("feedMix_" + name));
-      if (!data) return;
-      mixNameInput.value = data.name || "";
-      mixDateInput.value = data.date || "";
-      groupsDiv.innerHTML = "";
-      (data.groups || []).forEach(vals => {
-        const div = document.createElement("div");
-        div.className = "group";
-        div.innerHTML = `
-          <input type="text" placeholder="Group name" value="${vals[0] || ""}" />
-          <input type="number" placeholder="Count" min="1" value="${vals[1] || ""}" />
-          <button onclick="this.parentElement.remove()">🗑️</button>
-        `;
-        groupsDiv.appendChild(div);
-      });
-      ingredientsDiv.innerHTML = "";
-      (data.ingredients || []).forEach(vals => {
-        const div = document.createElement("div");
-        div.className = "ingredient";
-        div.innerHTML = `
-          <input type="text" placeholder="Ingredient name" value="${vals[0] || ""}" />
-          <input type="number" placeholder="Kg per cow" min="0" step="any" value="${vals[1] || ""}" />
-          <button onclick="this.parentElement.remove()">🗑️</button>
-        `;
-        ingredientsDiv.appendChild(div);
-      });
-    }
-
-    function saveResults() {
-      const text = resultsDiv.textContent.trim();
-      if (!text) return alert("Nothing to save.");
-      const a = document.createElement("a");
-      a.href = "data:text/plain;charset=utf-8," + encodeURIComponent(text);
-      a.download = (mixNameInput.value || "results") + ".txt";
-      a.click();
-    }
-
-    // On page load
-    updateSavedMixList();
-
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
