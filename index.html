@@ -68,4 +68,170 @@
     }
   </style>
 </head>
+<body>
+  <img src="logo.jpeg" alt="Farm Logo" style="max-width: 150px; margin-bottom: 20px;" />
+  <h1>🐄 Feed Mix Calculator</h1>
 
+  <h2>Mix Name & Date</h2>
+  <input type="text" id="mixName" placeholder="Enter mix name" />
+  <input type="text" id="mixDate" placeholder="Date" />
+  <button onclick="saveNamedMix()">💾 Save Named Mix</button>
+  <select id="savedMixes" onchange="loadNamedMix()">
+    <option value="">-- Load a Saved Mix --</option>
+  </select>
+
+  <h2>Cow Groups</h2>
+  <div id="groups"></div>
+  <button onclick="addGroup()">➕ Add Group</button>
+
+  <h2>Ingredients</h2>
+  <div id="ingredients"></div>
+  <button onclick="addIngredient()">➕ Add Ingredient</button>
+
+  <h2>Results</h2>
+  <div id="results"></div>
+  <button onclick="saveResults()">💾 Save Results</button>
+  <button onclick="window.print()">🖨️ Print</button>
+
+  <script>
+    const groupsDiv = document.getElementById("groups");
+    const ingredientsDiv = document.getElementById("ingredients");
+    const resultsDiv = document.getElementById("results");
+    const mixNameInput = document.getElementById("mixName");
+    const mixDateInput = document.getElementById("mixDate");
+    const savedMixesSelect = document.getElementById("savedMixes");
+
+    function addGroup(name = "", count = "") {
+      const div = document.createElement("div");
+      div.className = "group";
+      div.innerHTML = `
+        <input type="text" placeholder="Group Name" value="${name}" />
+        <input type="number" placeholder="Head Count" value="${count}" />
+      `;
+      groupsDiv.appendChild(div);
+      attachListeners();
+    }
+
+    function addIngredient(name = "", lbs = "", cost = "") {
+      const div = document.createElement("div");
+      div.className = "ingredient";
+      div.innerHTML = `
+        <input type="text" placeholder="Ingredient Name" value="${name}" />
+        <input type="number" placeholder="Lbs per Cow" value="${lbs}" />
+        <input type="number" placeholder="Cost per lb ($)" step="0.01" value="${cost}" />
+      `;
+      ingredientsDiv.appendChild(div);
+      attachListeners();
+    }
+
+    function attachListeners() {
+      document.querySelectorAll("input").forEach(input => {
+        input.removeEventListener("input", handleChange);
+        input.addEventListener("input", handleChange);
+      });
+    }
+
+    function handleChange() {
+      calculate();
+      saveToLocal();
+    }
+
+    function calculate() {
+      const mixName = mixNameInput.value.trim();
+      const mixDate = mixDateInput.value.trim();
+
+      const groups = Array.from(groupsDiv.querySelectorAll(".group")).map(div => {
+        const [nameInput, countInput] = div.querySelectorAll("input");
+        return {
+          name: nameInput.value || "(Unnamed Group)",
+          count: parseInt(countInput.value) || 0
+        };
+      });
+
+      const ingredients = Array.from(ingredientsDiv.querySelectorAll(".ingredient")).map(div => {
+        const [nameInput, lbsInput, costInput] = div.querySelectorAll("input");
+        return {
+          name: nameInput.value || "(Unnamed Ingredient)",
+          lbsPerCow: parseFloat(lbsInput.value) || 0,
+          costPerLb: parseFloat(costInput.value) || 0
+        };
+      });
+
+      let results = "";
+      if (mixName) results += `MIX NAME: ${mixName}\n`;
+      if (mixDate) results += `DATE: ${mixDate}\n\n`;
+
+      const totals = {};
+
+      ingredients.forEach(ing => {
+        results += `${ing.name.toUpperCase()}\n`;
+        let ingLbs = 0;
+        let ingCost = 0;
+
+        groups.forEach(group => {
+          const totalLbs = ing.lbsPerCow * group.count;
+          const totalCost = totalLbs * ing.costPerLb;
+          ingLbs += totalLbs;
+          ingCost += totalCost;
+          results += `- ${group.name}: ${totalLbs.toFixed(2)} lbs ($${totalCost.toFixed(2)})\n`;
+        });
+
+        results += `<strong>▶ TOTAL ${ing.name.toUpperCase()}: ${ingLbs.toFixed(2)} lbs ($${ingCost.toFixed(2)})</strong>\n\n`;
+        totals[ing.name] = { lbs: ingLbs, cost: ingCost };
+      });
+
+      results += `OVERALL TOTALS\n`;
+      Object.entries(totals).forEach(([name, data]) => {
+        results += `- ${name}: ${data.lbs.toFixed(2)} lbs ($${data.cost.toFixed(2)})\n`;
+      });
+
+      resultsDiv.innerHTML = results.replace(/<strong>(.*?)<\/strong>/g, "<strong>$1</strong>");
+    }
+
+    function saveResults() {
+      const blob = new Blob([resultsDiv.textContent], { type: "text/plain" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "feed-mix-results.txt";
+      link.click();
+    }
+
+    function setTodayDate() {
+      if (!mixDateInput.value) {
+        const today = new Date().toISOString().split("T")[0];
+        mixDateInput.value = today;
+      }
+    }
+
+    function saveToLocal() {
+      const data = collectMixData();
+      localStorage.setItem("feedMix_active", JSON.stringify(data));
+    }
+
+    function loadFromLocal() {
+      const data = JSON.parse(localStorage.getItem("feedMix_active") || "{}");
+      if (data.mixName) mixNameInput.value = data.mixName;
+      if (data.mixDate) mixDateInput.value = data.mixDate;
+      else setTodayDate();
+
+      groupsDiv.innerHTML = "";
+      (data.groups || []).forEach(g => addGroup(g[0], g[1]));
+      if (!data.groups) addGroup();
+
+      ingredientsDiv.innerHTML = "";
+      (data.ingredients || []).forEach(i => addIngredient(i[0], i[1], i[2]));
+      if (!data.ingredients) addIngredient();
+
+      attachListeners();
+      calculate();
+    }
+
+    function collectMixData() {
+      return {
+        mixName: mixNameInput.value,
+        mixDate: mixDateInput.value,
+        groups: Array.from(groupsDiv.querySelectorAll(".group")).map(div =>
+          Array.from(div.querySelectorAll("input")).map(input => input.value)
+        ),
+        ingredients: Array.from(ingredientsDiv.querySelectorAll(".ingredient")).map(div =>
+          Array.from(div.querySelectorAll(" [A](https://github.com/lzh-yi/Web-Fork-/tree/024b3e55587afdf9f05a677613a75f24e3d1803e/03-CSS%E8%BF%9B%E9%98%B6%2F04-%E5%A6%82%E4%BD%95%E8%AE%A9%E4%B8%80%E4%B8%AA%E5%85%83%E7%B4%A0%E6%B0%B4%E5%B9%B3%E5%9E%82%E7%9B%B4%E5%B1%85%E4%B8%AD%EF%BC%9F.md?copilot_analytics_metadata=eyJldmVudEluZm9fY2xpY2tEZXN0aW5hdGlvbiI6Imh0dHBzOlwvXC9naXRodWIuY29tXC9semgteWlcL1dlYi1Gb3JrLVwvdHJlZVwvMDI0YjNlNTU1ODdhZmRmOWYwNWE2Nzc2MTNhNzVmMjRlM2QxODAzZVwvMDMtQ1NTJUU4JUJGJTlCJUU5JTk4JUI2JTJGMDQtJUU1JUE2JTgyJUU0JUJEJTk1JUU4JUFFJUE5JUU0JUI4JTgwJUU0JUI4JUFBJUU1JTg1JTgzJUU3JUI0JUEwJUU2JUIwJUI0JUU1JUI5JUIzJUU1JTlFJTgyJUU3JTlCJUI0JUU1JUIxJTg1JUU0JUI4JUFEJUVGJUJDJTlGLm1kIiwiZXZlbnRJbmZvX2NvbnZlcnNhdGlvbklkIjoiZzl6TGV5cnFYM3NzNzNuOHlkUTZTIiwiZXZlbnRJbmZvX21lc3NhZ2VJZCI6InRHYkd4cndkRW9BYjNTUGJmajZTNCIsImV2ZW50SW5mb19jbGlja1NvdXJjZSI6ImNpdGF0aW9uTGluayJ9&citationMarker=9F742443-6C92-4C44-BF58-8F5A7C53B6F1)
