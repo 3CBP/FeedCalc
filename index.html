@@ -33,7 +33,13 @@
       font-family: monospace;
       background: #f0f0f0;
       padding: 20px;
-      font-size: 18px;
+      font-size: 20px;
+    }
+    #results strong {
+      font-weight: bold;
+      font-size: 22px;
+      display: block;
+      margin-top: 10px;
     }
 
     @media print {
@@ -41,7 +47,7 @@
         display: none;
       }
       #results {
-        font-size: 16pt;
+        font-size: 18pt;
         color: black;
       }
     }
@@ -51,7 +57,10 @@
         font-size: 22px;
       }
       #results {
-        font-size: 20px;
+        font-size: 22px;
+      }
+      #results strong {
+        font-size: 24px;
       }
     }
   </style>
@@ -147,39 +156,35 @@
 
       let results = "";
       if (mixName) results += `MIX NAME: ${mixName}\n`;
-      if (mixDate) results += `DATE: ${mixDate}\n`;
-      results += `\n`;
+      if (mixDate) results += `DATE: ${mixDate}\n\n`;
 
       const totals = {};
 
-      groups.forEach(group => {
-        results += `${group.name} (${group.count} cows)\n`;
-        let groupLbs = 0;
-        let groupCost = 0;
+      ingredients.forEach(ing => {
+        results += `${ing.name.toUpperCase()}\n`;
+        let ingLbs = 0;
+        let ingCost = 0;
 
-        ingredients.forEach(ing => {
+        groups.forEach(group => {
           const totalLbs = ing.lbsPerCow * group.count;
           const totalCost = totalLbs * ing.costPerLb;
+          ingLbs += totalLbs;
+          ingCost += totalCost;
 
-          groupLbs += totalLbs;
-          groupCost += totalCost;
-
-          results += `- ${ing.name}: ${totalLbs.toFixed(2)} lbs ($${totalCost.toFixed(2)})\n`;
-
-          if (!totals[ing.name]) totals[ing.name] = { lbs: 0, cost: 0 };
-          totals[ing.name].lbs += totalLbs;
-          totals[ing.name].cost += totalCost;
+          results += `- ${group.name}: ${totalLbs.toFixed(2)} lbs ($${totalCost.toFixed(2)})\n`;
         });
 
-        results += `TOTAL FOR ${group.name}: ${groupLbs.toFixed(2)} lbs ($${groupCost.toFixed(2)})\n\n`;
+        results += `<strong>▶ TOTAL ${ing.name.toUpperCase()}: ${ingLbs.toFixed(2)} lbs ($${ingCost.toFixed(2)})</strong>\n\n`;
+
+        totals[ing.name] = { lbs: ingLbs, cost: ingCost };
       });
 
-      results += `TOTALS\n`;
+      results += `OVERALL TOTALS\n`;
       Object.entries(totals).forEach(([name, data]) => {
         results += `- ${name}: ${data.lbs.toFixed(2)} lbs ($${data.cost.toFixed(2)})\n`;
       });
 
-      resultsDiv.textContent = results;
+      resultsDiv.innerHTML = results.replace(/<strong>(.*?)<\/strong>/g, "<strong>$1</strong>");
     }
 
     function saveToLocal() {
