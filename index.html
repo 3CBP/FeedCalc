@@ -66,8 +66,6 @@
         <input type="text" class="groupName" />
         <label>Number of Cows:</label>
         <input type="number" class="cowCount" />
-        <label>Average Weight (lbs):</label>
-        <input type="number" class="weight" />
         <div class="ingredients"></div>
         <button onclick="addIngredient(this)">➕ Add Ingredient</button>
       `;
@@ -92,10 +90,9 @@
       groups.forEach((group, index) => {
         const name = group.querySelector('.groupName').value || `Group ${index + 1}`;
         const cows = parseFloat(group.querySelector('.cowCount').value);
-        const weight = parseFloat(group.querySelector('.weight').value);
 
-        if (isNaN(cows) || isNaN(weight)) {
-          result += `${name}: ❌ Invalid input\n\n`;
+        if (isNaN(cows)) {
+          result += `${name}: ❌ Invalid cow count\n\n`;
           return;
         }
 
@@ -126,7 +123,6 @@
       groups.forEach(group => {
         const name = group.querySelector('.groupName').value;
         const cows = group.querySelector('.cowCount').value;
-        const weight = group.querySelector('.weight').value;
 
         let ingredients = [];
         group.querySelectorAll('.ingredient').forEach(ing => {
@@ -136,7 +132,7 @@
           });
         });
 
-        groupData.push({ name, cows, weight, ingredients });
+        groupData.push({ name, cows, ingredients });
       });
 
       localStorage.setItem('feedGroups', JSON.stringify(groupData));
@@ -156,7 +152,6 @@
 
         group.querySelector('.groupName').value = g.name;
         group.querySelector('.cowCount').value = g.cows;
-        group.querySelector('.weight').value = g.weight;
 
         const ingredientContainer = group.querySelector('.ingredients');
         ingredientContainer.innerHTML = '';
