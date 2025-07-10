@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Feed Mixing Ration Manager</title>
+  <title>Feed Ration Manager</title>
   <style>
     body {
       font-family: sans-serif;
@@ -27,6 +27,9 @@
       font-weight: bold;
       white-space: pre-line;
     }
+    .cost {
+      color: #166c16;
+    }
     @media print {
       button, input, select {
         display: none;
@@ -38,12 +41,10 @@
   </style>
 </head>
 <body>
-
   <div style="text-align: center;">
     <img src="logo.jpeg" alt="Logo" style="max-width: 200px;" />
   </div>
-
-  <h2>Feed Mixing Ration Manager</h2>
+  <h2>Feed Ration Manager</h2>
 
   <label>📌 New Ration Name:</label>
   <input type="text" id="newRationName" />
@@ -53,15 +54,15 @@
   <select id="rationSelect" onchange="loadRation(this.value)">
     <option value="">--Select--</option>
   </select>
-  <button onclick="deleteRation()">🗑️ Delete Selected</button>
+  <button onclick="deleteRation()">🗑️ Delete</button>
+  <button onclick="window.print()">🖨️ Print All</button>
 
   <div id="rations"></div>
-  <button onclick="window.print()">🖨️ Print All</button>
 
   <script>
     function addRation() {
       const name = document.getElementById('newRationName').value.trim();
-      if (!name) return alert("Enter a name for the ration.");
+      if (!name) return alert("Enter a ration name.");
 
       const container = document.getElementById('rations');
       const ration = document.createElement('div');
@@ -69,19 +70,15 @@
       ration.setAttribute('data-name', name);
       ration.innerHTML = `
         <h3>${name}</h3>
-        <div class="groups">
-          <h4>Groups</h4>
-        </div>
+        <div class="groups"><h4>Groups</h4></div>
         <button onclick="addGroup(this)">➕ Add Group</button>
-
-        <div class="ingredients">
-          <h4>Ingredients (lbs per cow/day)</h4>
-        </div>
+        <div class="ingredients"><h4>Ingredients</h4></div>
         <button onclick="addIngredient(this)">➕ Add Ingredient</button>
-
+        <button onclick="exportCSV(this)">📤 Export CSV</button>
+        <button onclick="saveRation('${name}')">💾 Save Ration</button>
         <div class="totals"></div>
         <div class="breakdown"></div>
-        <button onclick="saveRation('${name}')">💾 Save Ration</button>
+        <div class="cost"></div>
       `;
       container.appendChild(ration);
       updateRationList();
@@ -104,7 +101,8 @@
       div.className = 'ingredient';
       div.innerHTML = `
         <input type="text" placeholder="Ingredient name" class="name" />
-        <input type="number" placeholder="Lbs per cow/day" class="pounds" oninput="updateTotals(this)" />
+        <input type="number" placeholder="Lbs/cow/day" class="pounds" oninput="updateTotals(this)" />
+        <input type="number" placeholder="Cost/lb ($)" class="costPerLb" oninput="updateTotals(this)" />
       `;
       container.appendChild(div);
     }
@@ -122,45 +120,53 @@
       });
 
       let grandTotal = 0;
+      let grandCost = 0;
       let ingredientSums = {};
-      let ingredientNames = [];
+      let ingredientCosts = {};
+      let ingredientList = [];
 
       ingredients.forEach((ing, i) => {
         const name = ing.querySelector('.name').value || `Ingredient ${i + 1}`;
         const pounds = parseFloat(ing.querySelector('.pounds').value);
+        const costPerLb = parseFloat(ing.querySelector('.costPerLb').value) || 0;
         if (isNaN(pounds)) return;
 
-        ingredientNames.push({ name, pounds });
         ingredientSums[name] = 0;
+        ingredientCosts[name] = costPerLb;
+        ingredientList.push({ name, pounds, costPerLb });
 
         groups.forEach(g => {
-          const amount = pounds * g.cows;
-          ingredientSums[name] += amount;
-          grandTotal += amount;
+          const amt = pounds * g.cows;
+          ingredientSums[name] += amt;
+          grandTotal += amt;
+          grandCost += amt * costPerLb;
         });
       });
 
-      // Totals display
       let summary = `🧮 Ingredient Totals:\n`;
       for (let name in ingredientSums) {
-        summary += `  ${name}: ${ingredientSums[name].toFixed(2)} lbs\n`;
+        const cost = ingredientSums[name] * ingredientCosts[name];
+        summary += `  ${name}: ${ingredientSums[name].toFixed(2)} lbs ($${cost.toFixed(2)})\n`;
       }
-      summary += `📦 Grand Total: ${grandTotal.toFixed(2)} lbs`;
+      summary += `📦 Total Feed: ${grandTotal.toFixed(2)} lbs\n💰 Total Cost: $${grandCost.toFixed(2)}`;
       ration.querySelector('.totals').textContent = summary;
 
-      // Group breakdown
-      let groupBreakdown = `📘 Group Breakdown:\n`;
+      let breakdown = `📘 Group Breakdown:\n`;
       groups.forEach(g => {
-        groupBreakdown += `\n🔹 ${g.name} (${g.cows} cows)\n`;
-        let groupTotal = 0;
-        ingredientNames.forEach(ing => {
+        breakdown += `\n🔹 ${g.name} (${g.cows} cows)\n`;
+        let groupTotal = 0, groupCost = 0;
+        ingredientList.forEach(ing => {
           const amt = ing.pounds * g.cows;
-          groupBreakdown += `  ${ing.name}: ${amt.toFixed(2)} lbs\n`;
+          const cost = amt * ing.costPerLb;
+          breakdown += `  ${ing.name}: ${amt.toFixed(2)} lbs ($${cost.toFixed(2)})\n`;
           groupTotal += amt;
+          groupCost += cost;
         });
-        groupBreakdown += `  Total: ${groupTotal.toFixed(2)} lbs\n`;
+        breakdown += `  Total: ${groupTotal.toFixed(2)} lbs\n  Cost: $${groupCost.toFixed(2)}\n`;
       });
-      ration.querySelector('.breakdown').textContent = groupBreakdown;
+
+      ration.querySelector('.breakdown').textContent = breakdown;
+      ration.querySelector('.cost').textContent = "";
     }
 
     function saveRation(name) {
@@ -179,7 +185,8 @@
       ration.querySelectorAll('.ingredient').forEach(i => {
         ingredients.push({
           name: i.querySelector('.name').value,
-          pounds: i.querySelector('.pounds').value
+          pounds: i.querySelector('.pounds').value,
+          costPerLb: i.querySelector('.costPerLb').value
         });
       });
 
@@ -203,41 +210,12 @@
       if (!name) return;
       const stored = localStorage.getItem('ration_' + name);
       if (!stored) return alert("No data found.");
-
       const data = JSON.parse(stored);
-      addRation(); // adds blank container
+
+      addRation();
       const ration = document.querySelectorAll('.ration')[document.querySelectorAll('.ration').length - 1];
       ration.setAttribute('data-name', name);
       ration.querySelector('h3').textContent = name;
 
-      const groupContainer = ration.querySelector('.groups');
       data.groups.forEach(g => {
-        const div = document.createElement('div');
-        div.className = 'group';
-        div.innerHTML = `
-          <input type="text" class="groupName" value="${g.name}" />
-          <input type="number" class="cowCount" value="${g.cows}" oninput="updateTotals(this)" />
-        `;
-        groupContainer.appendChild(div);
-      });
-
-      const ingredientContainer = ration.querySelector('.ingredients');
-      data.ingredients.forEach(i => {
-        const div = document.createElement('div');
-        div.className = 'ingredient';
-        div.innerHTML = `
-          <input type="text" class="name" value="${i.name}" />
-          <input type="number" class="pounds" value="${i.pounds}" oninput="updateTotals(this)" />
-        `;
-        ingredientContainer.appendChild(div);
-      });
-
-      updateTotals(ration.querySelector('.cowCount'));
-    }
-
-    function deleteRation() {
-      const select = document.getElementById('rationSelect');
-      const name = select.value;
-      if (!name) return alert("Select a ration to delete.");
-
-      if (confirm(`Delete ration "${ [A](https://github.com/lzh-yi/Web-Fork-/tree/024b3e55587afdf9f05a677613a75f24e3d1803e/03-CSS%E8%BF%9B%E9%98%B6%2F04-%E5%A6%82%E4%BD%95%E8%AE%A9%E4%B8%80%E4%B8%AA%E5%85%83%E7%B4%A0%E6%B0%B4%E5%B9%B3%E5%9E%82%E7%9B%B4%E5%B1%85%E4%B8%AD%EF%BC%9F.md?copilot_analytics_metadata=eyJldmVudEluZm9fY2xpY2tTb3VyY2UiOiJjaXRhdGlvbkxpbmsiLCJldmVudEluZm9fY29udmVyc2F0aW9uSWQiOiJvdTZGZlpmV0FCM1cyYkNwR1VWd2EiLCJldmVudEluZm9fbWVzc2FnZUlkIjoicnhBOVlocHNYb2daenhSdG92TUVTIiwiZXZlbnRJbmZvX2NsaWNrRGVzdGluYXRpb24iOiJodHRwczpcL1wvZ2l0aHViLmNvbVwvbHpoLXlpXC9XZWItRm9yay1cL3RyZWVcLzAyNGIzZTU1NTg3YWZkZjlmMDVhNjc3NjEzYTc1ZjI0ZTNkMTgwM2VcLzAzLUNTUyVFOCVCRiU5QiVFOSU5OCVCNiUyRjA0LSVFNSVBNiU4MiVFNCVCRCU5NSVFOCVBRSVBOSVFNCVCOCU4MCVFNCVCOCVBQSVFNSU4NSU4MyVFNyVCNCVBMCVFNiVCMCVCNCVFNSVCOSVCMyVFNSU5RSU4MiVFNyU5QiVCNCVFNSVCMSU4NSVFNCVCOCVBRCVFRiVCQyU5Ri5tZCJ9&citationMarker=9F742443-6C92-4C44-BF58-8F5A7C53B6F1)
+        [A](https://github.com/lzh-yi/Web-Fork-/tree/024b3e55587afdf9f05a677613a75f24e3d1803e/03-CSS%E8%BF%9B%E9%98%B6%2F04-%E5%A6%82%E4%BD%95%E8%AE%A9%E4%B8%80%E4%B8%AA%E5%85%83%E7%B4%A0%E6%B0%B4%E5%B9%B3%E5%9E%82%E7%9B%B4%E5%B1%85%E4%B8%AD%EF%BC%9F.md?copilot_analytics_metadata=eyJldmVudEluZm9fY2xpY2tEZXN0aW5hdGlvbiI6Imh0dHBzOlwvXC9naXRodWIuY29tXC9semgteWlcL1dlYi1Gb3JrLVwvdHJlZVwvMDI0YjNlNTU1ODdhZmRmOWYwNWE2Nzc2MTNhNzVmMjRlM2QxODAzZVwvMDMtQ1NTJUU4JUJGJTlCJUU5JTk4JUI2JTJGMDQtJUU1JUE2JTgyJUU0JUJEJTk1JUU4JUFFJUE5JUU0JUI4JTgwJUU0JUI4JUFBJUU1JTg1JTgzJUU3JUI0JUEwJUU2JUIwJUI0JUU1JUI5JUIzJUU1JTlFJTgyJUU3JTlCJUI0JUU1JUIxJTg1JUU0JUI4JUFEJUVGJUJDJTlGLm1kIiwiZXZlbnRJbmZvX2NsaWNrU291cmNlIjoiY2l0YXRpb25MaW5rIiwiZXZlbnRJbmZvX2NvbnZlcnNhdGlvbklkIjoib3U2RmZaZldBQjNXMmJDcEdVVndhIiwiZXZlbnRJbmZvX21lc3NhZ2VJZCI6IllWSEN0OFE3RVNHTnNnaVdOdndDWSJ9&citationMarker=9F742443-6C92-4C44-BF58-8F5A7C53B6F1)
