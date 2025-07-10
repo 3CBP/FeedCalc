@@ -3,29 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title> Feed Ration Calculator</title>
+  <title>Feed Mixing Batch Calculator</title>
   <style>
     body {
       font-family: sans-serif;
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
       padding: 1em;
     }
-    input, button {
+    input, button, select {
       margin: 0.3em 0;
       padding: 0.5em;
       width: 100%;
     }
-    .group, .ingredient {
+    .batch, .ingredient, .group {
       margin: 1em 0;
       border: 1px solid #ccc;
       padding: 1em;
-      border-radius: 5px;
+      border-radius: 6px;
     }
     .totals {
       margin-top: 0.5em;
       font-weight: bold;
-      color: #1a5e1a;
+      color: #0b4d0b;
+      white-space: pre-line;
     }
     .output {
       margin-top: 1em;
@@ -33,10 +34,10 @@
       font-weight: bold;
     }
     @media print {
-      button, input {
+      button, input, select {
         display: none;
       }
-      .group {
+      .batch {
         page-break-inside: avoid;
       }
     }
@@ -48,32 +49,49 @@
     <img src="logo.jpeg" alt="Logo" style="max-width: 200px;" />
   </div>
 
-  <h2> Feed Ration Calculator</h2>
+  <h2>Feed Mixing Batch Calculator</h2>
 
-  <div id="groups"></div>
-  <button onclick="addGroup()">➕ Add Cow Group</button>
-  <button onclick="saveData()">💾 Save Inputs</button>
+  <div id="batches"></div>
+  <button onclick="addBatch()">➕ Add Mixing Batch</button>
+  <button onclick="saveData()">💾 Save</button>
   <button onclick="loadData()">🔄 Load Saved</button>
-  <button onclick="window.print()">🖨️ Print Summary</button>
+  <button onclick="window.print()">🖨️ Print</button>
 
   <div class="output" id="result"></div>
 
   <script>
-    function addGroup() {
-      const container = document.getElementById('groups');
-      const group = document.createElement('div');
-      group.className = 'group';
-      group.innerHTML = `
-        <h3>Group</h3>
-        <label>Group Name:</label>
-        <input type="text" class="groupName" />
-        <label>Number of Cows:</label>
-        <input type="number" class="cowCount" oninput="updateTotals(this)" />
-        <div class="ingredients"></div>
+    function addBatch() {
+      const container = document.getElementById('batches');
+      const batch = document.createElement('div');
+      batch.className = 'batch';
+      batch.innerHTML = `
+        <h3>Mixing Batch</h3>
+        <label>Batch Name:</label>
+        <input type="text" class="batchName" />
+        <div class="groups">
+          <h4>Assigned Groups</h4>
+        </div>
+        <button onclick="addGroup(this)">➕ Add Cow Group</button>
+
+        <div class="ingredients">
+          <h4>Ingredients (lbs per cow/day)</h4>
+        </div>
         <button onclick="addIngredient(this)">➕ Add Ingredient</button>
+
         <div class="totals"></div>
       `;
-      container.appendChild(group);
+      container.appendChild(batch);
+    }
+
+    function addGroup(button) {
+      const container = button.previousElementSibling;
+      const div = document.createElement('div');
+      div.className = 'group';
+      div.innerHTML = `
+        <input type="text" placeholder="Group name" class="groupName" />
+        <input type="number" placeholder="Number of cows" class="cowCount" oninput="updateTotals(this)" />
+      `;
+      container.appendChild(div);
     }
 
     function addIngredient(button) {
@@ -82,69 +100,94 @@
       div.className = 'ingredient';
       div.innerHTML = `
         <input type="text" placeholder="Ingredient name" class="name" />
-        <input type="number" placeholder="Pounds per cow/day" class="pounds" oninput="updateTotals(this)" />
+        <input type="number" placeholder="Lbs per cow/day" class="pounds" oninput="updateTotals(this)" />
       `;
       container.appendChild(div);
     }
 
     function updateTotals(inputEl) {
-      const group = inputEl.closest('.group');
-      const cows = parseFloat(group.querySelector('.cowCount')?.value) || 0;
+      const batch = inputEl.closest('.batch');
+      const cowCounts = batch.querySelectorAll('.cowCount');
+      const ingredients = batch.querySelectorAll('.ingredient');
 
-      let totalPerCow = 0;
-      const ingredients = group.querySelectorAll('.ingredient');
-
-      ingredients.forEach(ing => {
-        const pounds = parseFloat(ing.querySelector('.pounds')?.value);
-        if (!isNaN(pounds)) totalPerCow += pounds;
+      let totalCows = 0;
+      cowCounts.forEach(cow => {
+        const val = parseFloat(cow.value);
+        if (!isNaN(val)) totalCows += val;
       });
 
-      const totalGroupFeed = totalPerCow * cows;
-      const summary = `Total per cow: ${totalPerCow.toFixed(2)} lbs/day\nTotal for group: ${totalGroupFeed.toFixed(2)} lbs/day`;
-      group.querySelector('.totals').textContent = summary;
+      let ingredientBreakdown = '';
+      let grandTotal = 0;
+
+      ingredients.forEach(ing => {
+        const name = ing.querySelector('.name').value || "Unnamed";
+        const pounds = parseFloat(ing.querySelector('.pounds')?.value);
+        if (!isNaN(pounds)) {
+          const total = pounds * totalCows;
+          ingredientBreakdown += `  ${name}: ${total.toFixed(2)} lbs (${pounds.toFixed(2)} lbs/cow × ${totalCows} cows)\n`;
+          grandTotal += total;
+        }
+      });
+
+      const summary = `🐄 Total cows: ${totalCows}\n📦 Ingredient totals:\n${ingredientBreakdown}📊 Grand total: ${grandTotal.toFixed(2)} lbs`;
+      batch.querySelector('.totals').textContent = summary;
     }
 
     function saveData() {
-      const groups = document.querySelectorAll('.group');
-      let groupData = [];
+      const batches = document.querySelectorAll('.batch');
+      let data = [];
 
-      groups.forEach(group => {
-        const name = group.querySelector('.groupName').value;
-        const cows = group.querySelector('.cowCount').value;
+      batches.forEach(batch => {
+        const batchName = batch.querySelector('.batchName').value;
 
-        let ingredients = [];
-        group.querySelectorAll('.ingredient').forEach(ing => {
-          ingredients.push({
-            name: ing.querySelector('.name').value,
-            pounds: ing.querySelector('.pounds').value
+        let groups = [];
+        batch.querySelectorAll('.group').forEach(g => {
+          groups.push({
+            name: g.querySelector('.groupName').value,
+            cows: g.querySelector('.cowCount').value
           });
         });
 
-        groupData.push({ name, cows, ingredients });
+        let ingredients = [];
+        batch.querySelectorAll('.ingredient').forEach(i => {
+          ingredients.push({
+            name: i.querySelector('.name').value,
+            pounds: i.querySelector('.pounds').value
+          });
+        });
+
+        data.push({ batchName, groups, ingredients });
       });
 
-      localStorage.setItem('feedGroups', JSON.stringify(groupData));
-      alert('Inputs saved!');
+      localStorage.setItem('mixingBatches', JSON.stringify(data));
+      alert("Batches saved!");
     }
 
     function loadData() {
-      const stored = localStorage.getItem('feedGroups');
-      if (!stored) return alert('No saved data found.');
+      const stored = localStorage.getItem('mixingBatches');
+      if (!stored) return alert("No saved data found.");
 
-      document.getElementById('groups').innerHTML = '';
-      const groupData = JSON.parse(stored);
+      document.getElementById('batches').innerHTML = '';
+      const data = JSON.parse(stored);
 
-      groupData.forEach(g => {
-        addGroup();
-        const group = document.querySelectorAll('.group')[document.querySelectorAll('.group').length - 1];
+      data.forEach(entry => {
+        addBatch();
+        const batch = document.querySelectorAll('.batch')[document.querySelectorAll('.batch').length - 1];
+        batch.querySelector('.batchName').value = entry.batchName;
 
-        group.querySelector('.groupName').value = g.name;
-        group.querySelector('.cowCount').value = g.cows;
+        const groupContainer = batch.querySelector('.groups');
+        entry.groups.forEach(g => {
+          const div = document.createElement('div');
+          div.className = 'group';
+          div.innerHTML = `
+            <input type="text" class="groupName" value="${g.name}" />
+            <input type="number" class="cowCount" value="${g.cows}" oninput="updateTotals(this)" />
+          `;
+          groupContainer.appendChild(div);
+        });
 
-        const ingredientContainer = group.querySelector('.ingredients');
-        ingredientContainer.innerHTML = '';
-
-        g.ingredients.forEach(i => {
+        const ingredientContainer = batch.querySelector('.ingredients');
+        entry.ingredients.forEach(i => {
           const div = document.createElement('div');
           div.className = 'ingredient';
           div.innerHTML = `
@@ -154,10 +197,10 @@
           ingredientContainer.appendChild(div);
         });
 
-        updateTotals(group.querySelector('.cowCount')); // Refresh totals
+        updateTotals(batch.querySelector('.cowCount'));
       });
 
-      alert('Saved inputs loaded!');
+      alert("Saved batches loaded!");
     }
   </script>
 </body>
