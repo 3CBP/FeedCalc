@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: sans-serif;
-      max-width: 900px;
+      max-width: 950px;
       margin: auto;
       padding: 1em;
     }
@@ -16,16 +16,15 @@
       padding: 0.5em;
       width: 100%;
     }
-    .batch, .ingredient, .group {
+    .batch, .group, .ingredient {
       margin: 1em 0;
       border: 1px solid #ccc;
       padding: 1em;
       border-radius: 6px;
     }
-    .totals {
+    .totals, .breakdown {
       margin-top: 0.5em;
       font-weight: bold;
-      color: #0b4d0b;
       white-space: pre-line;
     }
     .output {
@@ -34,7 +33,7 @@
       font-weight: bold;
     }
     @media print {
-      button, input, select {
+      button, input {
         display: none;
       }
       .batch {
@@ -54,7 +53,7 @@
   <div id="batches"></div>
   <button onclick="addBatch()">➕ Add Mixing Batch</button>
   <button onclick="saveData()">💾 Save</button>
-  <button onclick="loadData()">🔄 Load Saved</button>
+  <button onclick="loadData()">🔄 Load</button>
   <button onclick="window.print()">🖨️ Print</button>
 
   <div class="output" id="result"></div>
@@ -79,6 +78,7 @@
         <button onclick="addIngredient(this)">➕ Add Ingredient</button>
 
         <div class="totals"></div>
+        <div class="breakdown"></div>
       `;
       container.appendChild(batch);
     }
@@ -110,27 +110,56 @@
       const cowCounts = batch.querySelectorAll('.cowCount');
       const ingredients = batch.querySelectorAll('.ingredient');
 
-      let totalCows = 0;
-      cowCounts.forEach(cow => {
-        const val = parseFloat(cow.value);
-        if (!isNaN(val)) totalCows += val;
-      });
-
-      let ingredientBreakdown = '';
-      let grandTotal = 0;
-
-      ingredients.forEach(ing => {
-        const name = ing.querySelector('.name').value || "Unnamed";
-        const pounds = parseFloat(ing.querySelector('.pounds')?.value);
-        if (!isNaN(pounds)) {
-          const total = pounds * totalCows;
-          ingredientBreakdown += `  ${name}: ${total.toFixed(2)} lbs (${pounds.toFixed(2)} lbs/cow × ${totalCows} cows)\n`;
-          grandTotal += total;
+      let groups = [];
+      cowCounts.forEach((cow, i) => {
+        const groupName = cow.closest('.group').querySelector('.groupName').value || `Group ${i + 1}`;
+        const cows = parseFloat(cow.value);
+        if (!isNaN(cows)) {
+          groups.push({ name: groupName, cows });
         }
       });
 
-      const summary = `🐄 Total cows: ${totalCows}\n📦 Ingredient totals:\n${ingredientBreakdown}📊 Grand total: ${grandTotal.toFixed(2)} lbs`;
+      let grandTotal = 0;
+      let ingredientSums = {};
+      let ingredientNames = [];
+
+      ingredients.forEach((ing, i) => {
+        const name = ing.querySelector('.name').value || `Ingredient ${i + 1}`;
+        const pounds = parseFloat(ing.querySelector('.pounds').value);
+        if (isNaN(pounds)) return;
+
+        ingredientNames.push({ name, pounds });
+        ingredientSums[name] = 0;
+
+        groups.forEach(g => {
+          const amount = pounds * g.cows;
+          ingredientSums[name] += amount;
+          grandTotal += amount;
+        });
+      });
+
+      // Ingredient summary
+      let summary = `🐄 Total cows: ${groups.reduce((acc, g) => acc + g.cows, 0)}\n📦 Ingredient totals:\n`;
+      for (let name in ingredientSums) {
+        summary += `  ${name}: ${ingredientSums[name].toFixed(2)} lbs\n`;
+      }
+      summary += `📊 Grand total: ${grandTotal.toFixed(2)} lbs`;
       batch.querySelector('.totals').textContent = summary;
+
+      // Breakdown per group
+      let groupBreakdown = `📘 Group Breakdown:\n`;
+      groups.forEach(g => {
+        groupBreakdown += `\n🔹 ${g.name} (${g.cows} cows)\n`;
+        let groupTotal = 0;
+        ingredientNames.forEach(ing => {
+          const amt = ing.pounds * g.cows;
+          groupBreakdown += `  ${ing.name}: ${amt.toFixed(2)} lbs\n`;
+          groupTotal += amt;
+        });
+        groupBreakdown += `  Total for ${g.name}: ${groupTotal.toFixed(2)} lbs\n`;
+      });
+
+      batch.querySelector('.breakdown').textContent = groupBreakdown;
     }
 
     function saveData() {
