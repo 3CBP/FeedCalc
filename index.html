@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title> Feed Ration Calculator</title>
+  <title>Multi-Group Feed Ration Calculator</title>
   <style>
     body {
       font-family: sans-serif;
@@ -68,8 +68,6 @@
         <input type="number" class="cowCount" />
         <label>Average Weight (lbs):</label>
         <input type="number" class="weight" />
-        <label>Feed Rate (% body weight):</label>
-        <input type="number" class="feedRate" />
         <div class="ingredients"></div>
         <button onclick="addIngredient(this)">➕ Add Ingredient</button>
       `;
@@ -82,7 +80,7 @@
       div.className = 'ingredient';
       div.innerHTML = `
         <input type="text" placeholder="Ingredient name" class="name" />
-        <input type="number" placeholder="Percentage" class="percent" />
+        <input type="number" placeholder="Pounds per cow/day" class="pounds" />
       `;
       container.appendChild(div);
     }
@@ -95,30 +93,27 @@
         const name = group.querySelector('.groupName').value || `Group ${index + 1}`;
         const cows = parseFloat(group.querySelector('.cowCount').value);
         const weight = parseFloat(group.querySelector('.weight').value);
-        const rate = parseFloat(group.querySelector('.feedRate').value);
 
-        if (isNaN(cows) || isNaN(weight) || isNaN(rate)) {
+        if (isNaN(cows) || isNaN(weight)) {
           result += `${name}: ❌ Invalid input\n\n`;
           return;
         }
 
-        const totalFeed = cows * weight * rate / 100;
         let breakdown = '';
-        let percentSum = 0;
+        let totalFeed = 0;
         const ingredients = group.querySelectorAll('.ingredient');
 
         ingredients.forEach(ing => {
           const ingName = ing.querySelector('.name').value;
-          const percent = parseFloat(ing.querySelector('.percent').value);
-          if (!ingName || isNaN(percent)) return;
-          const amount = totalFeed * percent / 100;
-          breakdown += `  ${ingName}: ${amount.toFixed(2)} lbs\n`;
-          percentSum += percent;
+          const pounds = parseFloat(ing.querySelector('.pounds').value);
+          if (!ingName || isNaN(pounds)) return;
+
+          const amount = pounds * cows;
+          breakdown += `  ${ingName}: ${amount.toFixed(2)} lbs (${pounds.toFixed(2)} lbs/cow)\n`;
+          totalFeed += amount;
         });
 
-        result += `📦 ${name}:\nTotal feed: ${totalFeed.toFixed(2)} lbs/day\n${breakdown}`;
-        if (percentSum !== 100) result += `⚠️ Warning: Ingredients add up to ${percentSum}%\n`;
-        result += `\n`;
+        result += `📦 ${name}:\nTotal feed: ${totalFeed.toFixed(2)} lbs/day\n${breakdown}\n`;
       });
 
       document.getElementById('result').textContent = result.trim();
@@ -132,17 +127,16 @@
         const name = group.querySelector('.groupName').value;
         const cows = group.querySelector('.cowCount').value;
         const weight = group.querySelector('.weight').value;
-        const rate = group.querySelector('.feedRate').value;
 
         let ingredients = [];
         group.querySelectorAll('.ingredient').forEach(ing => {
           ingredients.push({
             name: ing.querySelector('.name').value,
-            percent: ing.querySelector('.percent').value
+            pounds: ing.querySelector('.pounds').value
           });
         });
 
-        groupData.push({ name, cows, weight, rate, ingredients });
+        groupData.push({ name, cows, weight, ingredients });
       });
 
       localStorage.setItem('feedGroups', JSON.stringify(groupData));
@@ -163,7 +157,6 @@
         group.querySelector('.groupName').value = g.name;
         group.querySelector('.cowCount').value = g.cows;
         group.querySelector('.weight').value = g.weight;
-        group.querySelector('.feedRate').value = g.rate;
 
         const ingredientContainer = group.querySelector('.ingredients');
         ingredientContainer.innerHTML = '';
@@ -173,7 +166,7 @@
           div.className = 'ingredient';
           div.innerHTML = `
             <input type="text" class="name" value="${i.name}" />
-            <input type="number" class="percent" value="${i.percent}" />
+            <input type="number" class="pounds" value="${i.pounds}" />
           `;
           ingredientContainer.appendChild(div);
         });
