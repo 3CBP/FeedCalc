@@ -22,6 +22,11 @@
       padding: 1em;
       border-radius: 5px;
     }
+    .totals {
+      margin-top: 0.5em;
+      font-weight: bold;
+      color: #1a5e1a;
+    }
     .output {
       margin-top: 1em;
       white-space: pre-line;
@@ -39,7 +44,6 @@
 </head>
 <body>
 
-  <!-- Logo -->
   <div style="text-align: center;">
     <img src="logo.jpeg" alt="Logo" style="max-width: 200px;" />
   </div>
@@ -48,7 +52,6 @@
 
   <div id="groups"></div>
   <button onclick="addGroup()">➕ Add Cow Group</button>
-  <button onclick="calculateFeed()">🧮 Calculate All Rations</button>
   <button onclick="saveData()">💾 Save Inputs</button>
   <button onclick="loadData()">🔄 Load Saved</button>
   <button onclick="window.print()">🖨️ Print Summary</button>
@@ -65,9 +68,10 @@
         <label>Group Name:</label>
         <input type="text" class="groupName" />
         <label>Number of Cows:</label>
-        <input type="number" class="cowCount" />
+        <input type="number" class="cowCount" oninput="updateTotals(this)" />
         <div class="ingredients"></div>
         <button onclick="addIngredient(this)">➕ Add Ingredient</button>
+        <div class="totals"></div>
       `;
       container.appendChild(group);
     }
@@ -78,42 +82,26 @@
       div.className = 'ingredient';
       div.innerHTML = `
         <input type="text" placeholder="Ingredient name" class="name" />
-        <input type="number" placeholder="Pounds per cow/day" class="pounds" />
+        <input type="number" placeholder="Pounds per cow/day" class="pounds" oninput="updateTotals(this)" />
       `;
       container.appendChild(div);
     }
 
-    function calculateFeed() {
-      const groups = document.querySelectorAll('.group');
-      let result = '';
+    function updateTotals(inputEl) {
+      const group = inputEl.closest('.group');
+      const cows = parseFloat(group.querySelector('.cowCount')?.value) || 0;
 
-      groups.forEach((group, index) => {
-        const name = group.querySelector('.groupName').value || `Group ${index + 1}`;
-        const cows = parseFloat(group.querySelector('.cowCount').value);
+      let totalPerCow = 0;
+      const ingredients = group.querySelectorAll('.ingredient');
 
-        if (isNaN(cows)) {
-          result += `${name}: ❌ Invalid cow count\n\n`;
-          return;
-        }
-
-        let breakdown = '';
-        let totalFeed = 0;
-        const ingredients = group.querySelectorAll('.ingredient');
-
-        ingredients.forEach(ing => {
-          const ingName = ing.querySelector('.name').value;
-          const pounds = parseFloat(ing.querySelector('.pounds').value);
-          if (!ingName || isNaN(pounds)) return;
-
-          const amount = pounds * cows;
-          breakdown += `  ${ingName}: ${amount.toFixed(2)} lbs (${pounds.toFixed(2)} lbs/cow)\n`;
-          totalFeed += amount;
-        });
-
-        result += `📦 ${name}:\nTotal feed: ${totalFeed.toFixed(2)} lbs/day\n${breakdown}\n`;
+      ingredients.forEach(ing => {
+        const pounds = parseFloat(ing.querySelector('.pounds')?.value);
+        if (!isNaN(pounds)) totalPerCow += pounds;
       });
 
-      document.getElementById('result').textContent = result.trim();
+      const totalGroupFeed = totalPerCow * cows;
+      const summary = `Total per cow: ${totalPerCow.toFixed(2)} lbs/day\nTotal for group: ${totalGroupFeed.toFixed(2)} lbs/day`;
+      group.querySelector('.totals').textContent = summary;
     }
 
     function saveData() {
@@ -161,10 +149,12 @@
           div.className = 'ingredient';
           div.innerHTML = `
             <input type="text" class="name" value="${i.name}" />
-            <input type="number" class="pounds" value="${i.pounds}" />
+            <input type="number" class="pounds" value="${i.pounds}" oninput="updateTotals(this)" />
           `;
           ingredientContainer.appendChild(div);
         });
+
+        updateTotals(group.querySelector('.cowCount')); // Refresh totals
       });
 
       alert('Saved inputs loaded!');
