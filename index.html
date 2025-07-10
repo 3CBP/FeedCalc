@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Feed Ration Manager</title>
   <style>
     body {
@@ -15,6 +15,7 @@
       margin: 0.3em 0;
       padding: 0.5em;
       width: 100%;
+      font-size: 1em;
     }
     .ration, .group, .ingredient {
       margin: 1em 0;
@@ -22,15 +23,13 @@
       padding: 1em;
       border-radius: 6px;
     }
-    .totals, .breakdown {
+    .totals, .breakdown, .cost {
       margin-top: 0.5em;
       font-weight: bold;
       white-space: pre-line;
     }
     .cost {
       color: green;
-      font-weight: bold;
-      white-space: pre-line;
     }
     @media print {
       button, input, select {
@@ -44,12 +43,12 @@
 </head>
 <body>
   <div style="text-align: center;">
-    <img src="logo.jpeg" alt="Logo" style="max-width: 200px;">
+    <img src="logo.jpeg" alt="Logo" style="max-width: 200px;" />
   </div>
   <h2>Feed Ration Manager</h2>
 
   <label>📌 New Ration Name:</label>
-  <input type="text" id="newRationName">
+  <input type="text" id="newRationName" />
   <button onclick="addRation()">➕ Create Ration</button>
 
   <label>📂 Load Saved Ration:</label>
@@ -61,7 +60,7 @@
 
   <div id="rations"></div>
 
-  <script>
+    <script>
     function addRation() {
       const name = document.getElementById('newRationName').value.trim();
       if (!name) return alert("Enter a ration name.");
@@ -94,6 +93,7 @@
         <input type="number" placeholder="Number of cows" class="cowCount" oninput="updateTotals(this)">
       `;
       container.appendChild(div);
+      updateTotals(button); // Live update on group add
     }
 
     function addIngredient(button) {
@@ -106,9 +106,10 @@
         <input type="number" placeholder="Cost/lb ($)" class="costPerLb" oninput="updateTotals(this)">
       `;
       container.appendChild(div);
+      updateTotals(button); // Auto-refresh after ingredient add
     }
 
-    function updateTotals(inputEl) {
+          function updateTotals(inputEl) {
       const ration = inputEl.closest('.ration');
       const cowCounts = ration.querySelectorAll('.cowCount');
       const ingredients = ration.querySelectorAll('.ingredient');
@@ -205,19 +206,10 @@
       });
     }
 
-    function loadRation(name) {
-      if (!name) return;
-      const stored = localStorage.getItem('ration_' + name);
-      if (!stored) return alert("No data found.");
-      const data = JSON.parse(stored);
-
-      addRation();
-      const ration = document.querySelectorAll('.ration')[document.querySelectorAll('.ration').length - 1];
-      ration.setAttribute('data-name', name);
-      ration.querySelector('h3').textContent = name;
-
-      data.groups.forEach(g => {
-        const div = document.createElement('div');
-        div.className = 'group';
-        div.innerHTML = `
-          <input type="text" class="groupName" value [A](https://github.com/parthasrd/StockUpdate/tree/2850413d5c50cb4738ad3ab5daa70a00ae1e5d8a/feed-activity-log-files.php?copilot_analytics_metadata=eyJldmVudEluZm9fbWVzc2FnZUlkIjoiVTZnbWRaYndwbmlpZ21MTmhDcGJCIiwiZXZlbnRJbmZvX2NsaWNrRGVzdGluYXRpb24iOiJodHRwczpcL1wvZ2l0aHViLmNvbVwvcGFydGhhc3JkXC9TdG9ja1VwZGF0ZVwvdHJlZVwvMjg1MDQxM2Q1YzUwY2I0NzM4YWQzYWI1ZGFhNzBhMDBhZTFlNWQ4YVwvZmVlZC1hY3Rpdml0eS1sb2ctZmlsZXMucGhwIiwiZXZlbnRJbmZvX2NsaWNrU291cmNlIjoiY2l0YXRpb25MaW5rIiwiZXZlbnRJbmZvX2NvbnZlcnNhdGlvbklkIjoib3U2RmZaZldBQjNXMmJDcEdVVndhIn0%3D&citationMarker=9F742443-6C92-4C44-BF58-8F5A7C53B6F1)
+    function deleteRation() {
+      const name = document.getElementById("rationSelect").value;
+      if (!name) return alert("Select a ration to delete.");
+      localStorage.removeItem("ration_" + name);
+      updateRationList();
+      alert("Ration deleted.");
+    }
