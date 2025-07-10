@@ -2,127 +2,201 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Minimal Feed Ration Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feed Ration Manager</title>
   <style>
-    body { font-family: sans-serif; max-width: 900px; margin: auto; padding: 1em; }
-    input, button { margin: 0.3em 0; padding: 0.5em; width: 100%; }
-    .section { margin: 1em 0; border: 1px solid #ccc; padding: 1em; border-radius: 6px; }
-    .output { white-space: pre-line; font-weight: bold; margin-top: 1em; }
+    body {
+      font-family: sans-serif;
+      max-width: 1000px;
+      margin: auto;
+      padding: 1em;
+    }
+    input, button, select {
+      margin: 0.3em 0;
+      padding: 0.5em;
+      width: 100%;
+    }
+    .ration, .group, .ingredient {
+      margin: 1em 0;
+      border: 1px solid #ccc;
+      padding: 1em;
+      border-radius: 6px;
+    }
+    .totals, .breakdown {
+      margin-top: 0.5em;
+      font-weight: bold;
+      white-space: pre-line;
+    }
+    .cost {
+      color: green;
+      font-weight: bold;
+      white-space: pre-line;
+    }
+    @media print {
+      button, input, select {
+        display: none;
+      }
+      .ration {
+        page-break-inside: avoid;
+      }
+    }
   </style>
 </head>
 <body>
-  <h2>Feed Ration Calculator</h2>
+  <div style="text-align: center;">
+    <img src="logo.jpeg" alt="Logo" style="max-width: 200px;">
+  </div>
+  <h2>Feed Ration Manager</h2>
 
-  <input type="text" id="rationName" placeholder="📝 Ration name">
-  <button onclick="createRation()">➕ Create Ration</button>
-  <select id="savedRations" onchange="loadRation(this.value)">
-    <option value="">— Load Saved Ration —</option>
+  <label>📌 New Ration Name:</label>
+  <input type="text" id="newRationName">
+  <button onclick="addRation()">➕ Create Ration</button>
+
+  <label>📂 Load Saved Ration:</label>
+  <select id="rationSelect" onchange="loadRation(this.value)">
+    <option value="">--Select--</option>
   </select>
+  <button onclick="deleteRation()">🗑️ Delete</button>
+  <button onclick="window.print()">🖨️ Print All</button>
 
-  <div id="rationArea"></div>
+  <div id="rations"></div>
 
   <script>
-    function createRation() {
-      const name = document.getElementById("rationName").value.trim();
-      if (!name) return alert("Enter ration name.");
-
-      const area = document.getElementById("rationArea");
-      area.innerHTML = `
-        <div class="section">
-          <h3>${name}</h3>
-          <div id="groups"></div>
-          <button onclick="addGroup()">Add Group</button>
-          <div id="ingredients"></div>
-          <button onclick="addIngredient()">Add Ingredient</button>
-          <button onclick="saveRation('${name}')">💾 Save</button>
-          <div class="output" id="results"></div>
-        </div>
+    function addRation() {
+      const name = document.getElementById('newRationName').value.trim();
+      if (!name) return alert("Enter a ration name.");
+      const container = document.getElementById('rations');
+      const ration = document.createElement('div');
+      ration.className = 'ration';
+      ration.setAttribute('data-name', name);
+      ration.innerHTML = `
+        <h3>${name}</h3>
+        <div class="groups"><h4>Groups</h4></div>
+        <button onclick="addGroup(this)">➕ Add Group</button>
+        <div class="ingredients"><h4>Ingredients</h4></div>
+        <button onclick="addIngredient(this)">➕ Add Ingredient</button>
+        <button onclick="exportCSV(this)">📤 Export CSV</button>
+        <button onclick="saveRation('${name}')">💾 Save Ration</button>
+        <div class="totals"></div>
+        <div class="breakdown"></div>
+        <div class="cost"></div>
       `;
+      container.appendChild(ration);
+      updateRationList();
     }
 
-    function addGroup() {
-      const container = document.getElementById("groups");
-      const div = document.createElement("div");
+    function addGroup(button) {
+      const container = button.previousElementSibling;
+      const div = document.createElement('div');
+      div.className = 'group';
       div.innerHTML = `
         <input type="text" placeholder="Group name" class="groupName">
-        <input type="number" placeholder="Number of cows" class="cowCount" oninput="updateTotals()">
+        <input type="number" placeholder="Number of cows" class="cowCount" oninput="updateTotals(this)">
       `;
       container.appendChild(div);
     }
 
-    function addIngredient() {
-      const container = document.getElementById("ingredients");
-      const div = document.createElement("div");
+    function addIngredient(button) {
+      const container = button.previousElementSibling;
+      const div = document.createElement('div');
+      div.className = 'ingredient';
       div.innerHTML = `
-        <input type="text" placeholder="Ingredient name" class="ingName">
-        <input type="number" placeholder="Lbs per cow/day" class="ingAmount" oninput="updateTotals()">
+        <input type="text" placeholder="Ingredient name" class="name">
+        <input type="number" placeholder="Lbs/cow/day" class="pounds" oninput="updateTotals(this)">
+        <input type="number" placeholder="Cost/lb ($)" class="costPerLb" oninput="updateTotals(this)">
       `;
       container.appendChild(div);
     }
 
-    function updateTotals() {
-      const cowCounts = document.querySelectorAll(".cowCount");
-      const ingredients = document.querySelectorAll(".ingName");
-      const amounts = document.querySelectorAll(".ingAmount");
-      const results = document.getElementById("results");
+    function updateTotals(inputEl) {
+      const ration = inputEl.closest('.ration');
+      const cowCounts = ration.querySelectorAll('.cowCount');
+      const ingredients = ration.querySelectorAll('.ingredient');
 
-      let groups = [], totalCows = 0;
-      cowCounts.forEach((el, i) => {
-        const name = document.querySelectorAll(".groupName")[i].value || `Group ${i+1}`;
-        const cows = parseFloat(el.value);
-        if (!isNaN(cows)) {
-          groups.push({ name, cows });
-          totalCows += cows;
-        }
+      let groups = [];
+      cowCounts.forEach((cow, i) => {
+        const groupName = cow.closest('.group').querySelector('.groupName').value || `Group ${i+1}`;
+        const cows = parseFloat(cow.value);
+        if (!isNaN(cows)) groups.push({ name: groupName, cows });
       });
 
-      let feedSummary = `Total Cows: ${totalCows}\n\nIngredient Totals:\n`;
-      let breakdown = `\nGroup Breakdown:\n`;
+      let grandTotal = 0;
+      let grandCost = 0;
+      let ingredientSums = {}, ingredientCosts = {};
+      let ingredientList = [];
 
-      for (let i = 0; i < ingredients.length; i++) {
-        const name = ingredients[i].value || `Ingredient ${i+1}`;
-        const lbs = parseFloat(amounts[i].value);
-        if (isNaN(lbs)) continue;
+      ingredients.forEach((ing, i) => {
+        const name = ing.querySelector('.name').value || `Ingredient ${i+1}`;
+        const pounds = parseFloat(ing.querySelector('.pounds').value);
+        const costPerLb = parseFloat(ing.querySelector('.costPerLb').value) || 0;
+        if (isNaN(pounds)) return;
 
-        let total = 0;
-        groups.forEach(group => { total += group.cows * lbs; });
-        feedSummary += `  ${name}: ${total.toFixed(2)} lbs\n`;
+        ingredientSums[name] = 0;
+        ingredientCosts[name] = costPerLb;
+        ingredientList.push({ name, pounds, costPerLb });
 
-        groups.forEach(group => {
-          const groupTotal = group.cows * lbs;
-          breakdown += `  ${group.name} - ${name}: ${groupTotal.toFixed(2)} lbs\n`;
+        groups.forEach(g => {
+          const amt = pounds * g.cows;
+          ingredientSums[name] += amt;
+          grandTotal += amt;
+          grandCost += amt * costPerLb;
         });
-      }
+      });
 
-      results.textContent = feedSummary + breakdown;
+      let summary = `🧮 Ingredient Totals:\n`;
+      for (let name in ingredientSums) {
+        const cost = ingredientSums[name] * ingredientCosts[name];
+        summary += `  ${name}: ${ingredientSums[name].toFixed(2)} lbs ($${cost.toFixed(2)})\n`;
+      }
+      summary += `📦 Total Feed: ${grandTotal.toFixed(2)} lbs\n💰 Total Cost: $${grandCost.toFixed(2)}`;
+      ration.querySelector('.totals').textContent = summary;
+
+      let breakdown = `📘 Group Breakdown:\n`;
+      groups.forEach(g => {
+        breakdown += `\n🔹 ${g.name} (${g.cows} cows)\n`;
+        let groupTotal = 0, groupCost = 0;
+        ingredientList.forEach(ing => {
+          const amt = ing.pounds * g.cows;
+          const cost = amt * ing.costPerLb;
+          breakdown += `  ${ing.name}: ${amt.toFixed(2)} lbs ($${cost.toFixed(2)})\n`;
+          groupTotal += amt;
+          groupCost += cost;
+        });
+        breakdown += `  Total: ${groupTotal.toFixed(2)} lbs\n  Cost: $${groupCost.toFixed(2)}\n`;
+      });
+
+      ration.querySelector('.breakdown').textContent = breakdown;
     }
 
     function saveRation(name) {
-      const groupData = [];
-      const ingredientData = [];
+      const ration = document.querySelector(`.ration[data-name="${name}"]`);
+      if (!ration) return;
 
-      document.querySelectorAll(".groupName").forEach((el, i) => {
-        groupData.push({
-          name: el.value,
-          cows: document.querySelectorAll(".cowCount")[i].value
+      let groups = [];
+      ration.querySelectorAll('.group').forEach(g => {
+        groups.push({
+          name: g.querySelector('.groupName').value,
+          cows: g.querySelector('.cowCount').value
         });
       });
 
-      document.querySelectorAll(".ingName").forEach((el, i) => {
-        ingredientData.push({
-          name: el.value,
-          pounds: document.querySelectorAll(".ingAmount")[i].value
+      let ingredients = [];
+      ration.querySelectorAll('.ingredient').forEach(i => {
+        ingredients.push({
+          name: i.querySelector('.name').value,
+          pounds: i.querySelector('.pounds').value,
+          costPerLb: i.querySelector('.costPerLb').value
         });
       });
 
-      localStorage.setItem("ration_" + name, JSON.stringify({ groupData, ingredientData }));
-      alert("Saved!");
-      updateSavedRationList();
+      localStorage.setItem('ration_' + name, JSON.stringify({ name, groups, ingredients }));
+      updateRationList();
+      alert("Ration saved!");
     }
 
-    function updateSavedRationList() {
-      const select = document.getElementById("savedRations");
-      select.innerHTML = '<option value="">— Load Saved Ration —</option>';
+    function updateRationList() {
+      const select = document.getElementById('rationSelect');
+      select.innerHTML = '<option value="">--Select--</option>';
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith("ration_")) {
           const name = key.replace("ration_", "");
@@ -132,32 +206,18 @@
     }
 
     function loadRation(name) {
-      const stored = localStorage.getItem("ration_" + name);
-      if (!stored) return;
+      if (!name) return;
+      const stored = localStorage.getItem('ration_' + name);
+      if (!stored) return alert("No data found.");
       const data = JSON.parse(stored);
-      document.getElementById("rationName").value = name;
-      createRation();
 
-      const groupContainer = document.getElementById("groups");
-      data.groupData.forEach(g => {
-        const div = document.createElement("div");
-        div.innerHTML = `<input type="text" class="groupName" value="${g.name}">
-                         <input type="number" class="cowCount" value="${g.cows}" oninput="updateTotals()">`;
-        groupContainer.appendChild(div);
-      });
+      addRation();
+      const ration = document.querySelectorAll('.ration')[document.querySelectorAll('.ration').length - 1];
+      ration.setAttribute('data-name', name);
+      ration.querySelector('h3').textContent = name;
 
-      const ingContainer = document.getElementById("ingredients");
-      data.ingredientData.forEach(i => {
-        const div = document.createElement("div");
-        div.innerHTML = `<input type="text" class="ingName" value="${i.name}">
-                         <input type="number" class="ingAmount" value="${i.pounds}" oninput="updateTotals()">`;
-        ingContainer.appendChild(div);
-      });
-
-      updateTotals();
-    }
-
-    updateSavedRationList();
-  </script>
-</body>
-</html>
+      data.groups.forEach(g => {
+        const div = document.createElement('div');
+        div.className = 'group';
+        div.innerHTML = `
+          <input type="text" class="groupName" value [A](https://github.com/parthasrd/StockUpdate/tree/2850413d5c50cb4738ad3ab5daa70a00ae1e5d8a/feed-activity-log-files.php?copilot_analytics_metadata=eyJldmVudEluZm9fbWVzc2FnZUlkIjoiVTZnbWRaYndwbmlpZ21MTmhDcGJCIiwiZXZlbnRJbmZvX2NsaWNrRGVzdGluYXRpb24iOiJodHRwczpcL1wvZ2l0aHViLmNvbVwvcGFydGhhc3JkXC9TdG9ja1VwZGF0ZVwvdHJlZVwvMjg1MDQxM2Q1YzUwY2I0NzM4YWQzYWI1ZGFhNzBhMDBhZTFlNWQ4YVwvZmVlZC1hY3Rpdml0eS1sb2ctZmlsZXMucGhwIiwiZXZlbnRJbmZvX2NsaWNrU291cmNlIjoiY2l0YXRpb25MaW5rIiwiZXZlbnRJbmZvX2NvbnZlcnNhdGlvbklkIjoib3U2RmZaZldBQjNXMmJDcEdVVndhIn0%3D&citationMarker=9F742443-6C92-4C44-BF58-8F5A7C53B6F1)
