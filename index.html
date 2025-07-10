@@ -2,30 +2,185 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Feed Ration Calculator</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Multi-Group Feed Ration Calculator</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: auto;
+      padding: 1em;
+    }
+    input, button {
+      margin: 0.3em 0;
+      padding: 0.5em;
+      width: 100%;
+    }
+    .group, .ingredient {
+      margin: 1em 0;
+      border: 1px solid #ccc;
+      padding: 1em;
+      border-radius: 5px;
+    }
+    .output {
+      margin-top: 1em;
+      white-space: pre-line;
+      font-weight: bold;
+    }
+    @media print {
+      button, input {
+        display: none;
+      }
+      .group {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <img src="logo.jpeg" alt="Logo" id="logo" />
-    <h1>Feed Ration Calculator</h1>
-  </header>
 
-  <main>
-    <!-- Forage Group -->
-    <section class="group">
-      <h2>Forage</h2>
-      <div class="ingredient">
-        <label>Alfalfa (lb): <input type="number" class="feed" data-dm="0.9" /></label>
-      </div>
-      <div class="ingredient">
-        <label>Grass Hay (lb): <input type="number" class="feed" data-dm="0.85" /></label>
-      </div>
-    </section>
+  <!-- Logo -->
+  <div style="text-align: center;">
+    <img src="logo.jpeg" alt="Logo" style="max-width: 200px;" />
+  </div>
 
-    <!-- Grain Group -->
-    <section class="group">
-      <h2>Grain</h2>
-      <div class="ingredient">
-        <label>Corn (lb
+  <h2>Multi-Group Feed Ration Calculator</h2>
+
+  <div id="groups"></div>
+  <button onclick="addGroup()">➕ Add Cow Group</button>
+  <button onclick="calculateFeed()">🧮 Calculate All Rations</button>
+  <button onclick="saveData()">💾 Save Inputs</button>
+  <button onclick="loadData()">🔄 Load Saved</button>
+  <button onclick="window.print()">🖨️ Print Summary</button>
+
+  <div class="output" id="result"></div>
+
+  <script>
+    function addGroup() {
+      const container = document.getElementById('groups');
+      const group = document.createElement('div');
+      group.className = 'group';
+      group.innerHTML = `
+        <h3>Group</h3>
+        <label>Group Name:</label>
+        <input type="text" class="groupName" />
+        <label>Number of Cows:</label>
+        <input type="number" class="cowCount" />
+        <label>Average Weight (lbs):</label>
+        <input type="number" class="weight" />
+        <label>Feed Rate (% body weight):</label>
+        <input type="number" class="feedRate" />
+        <div class="ingredients"></div>
+        <button onclick="addIngredient(this)">➕ Add Ingredient</button>
+      `;
+      container.appendChild(group);
+    }
+
+    function addIngredient(button) {
+      const container = button.previousElementSibling;
+      const div = document.createElement('div');
+      div.className = 'ingredient';
+      div.innerHTML = `
+        <input type="text" placeholder="Ingredient name" class="name" />
+        <input type="number" placeholder="Percentage" class="percent" />
+      `;
+      container.appendChild(div);
+    }
+
+    function calculateFeed() {
+      const groups = document.querySelectorAll('.group');
+      let result = '';
+
+      groups.forEach((group, index) => {
+        const name = group.querySelector('.groupName').value || `Group ${index + 1}`;
+        const cows = parseFloat(group.querySelector('.cowCount').value);
+        const weight = parseFloat(group.querySelector('.weight').value);
+        const rate = parseFloat(group.querySelector('.feedRate').value);
+
+        if (isNaN(cows) || isNaN(weight) || isNaN(rate)) {
+          result += `${name}: ❌ Invalid input\n\n`;
+          return;
+        }
+
+        const totalFeed = cows * weight * rate / 100;
+        let breakdown = '';
+        let percentSum = 0;
+        const ingredients = group.querySelectorAll('.ingredient');
+
+        ingredients.forEach(ing => {
+          const ingName = ing.querySelector('.name').value;
+          const percent = parseFloat(ing.querySelector('.percent').value);
+          if (!ingName || isNaN(percent)) return;
+          const amount = totalFeed * percent / 100;
+          breakdown += `  ${ingName}: ${amount.toFixed(2)} lbs\n`;
+          percentSum += percent;
+        });
+
+        result += `📦 ${name}:\nTotal feed: ${totalFeed.toFixed(2)} lbs/day\n${breakdown}`;
+        if (percentSum !== 100) result += `⚠️ Warning: Ingredients add up to ${percentSum}%\n`;
+        result += `\n`;
+      });
+
+      document.getElementById('result').textContent = result.trim();
+    }
+
+    function saveData() {
+      const groups = document.querySelectorAll('.group');
+      let groupData = [];
+
+      groups.forEach(group => {
+        const name = group.querySelector('.groupName').value;
+        const cows = group.querySelector('.cowCount').value;
+        const weight = group.querySelector('.weight').value;
+        const rate = group.querySelector('.feedRate').value;
+
+        let ingredients = [];
+        group.querySelectorAll('.ingredient').forEach(ing => {
+          ingredients.push({
+            name: ing.querySelector('.name').value,
+            percent: ing.querySelector('.percent').value
+          });
+        });
+
+        groupData.push({ name, cows, weight, rate, ingredients });
+      });
+
+      localStorage.setItem('feedGroups', JSON.stringify(groupData));
+      alert('Inputs saved!');
+    }
+
+    function loadData() {
+      const stored = localStorage.getItem('feedGroups');
+      if (!stored) return alert('No saved data found.');
+
+      document.getElementById('groups').innerHTML = '';
+      const groupData = JSON.parse(stored);
+
+      groupData.forEach(g => {
+        addGroup();
+        const group = document.querySelectorAll('.group')[document.querySelectorAll('.group').length - 1];
+
+        group.querySelector('.groupName').value = g.name;
+        group.querySelector('.cowCount').value = g.cows;
+        group.querySelector('.weight').value = g.weight;
+        group.querySelector('.feedRate').value = g.rate;
+
+        const ingredientContainer = group.querySelector('.ingredients');
+        ingredientContainer.innerHTML = '';
+
+        g.ingredients.forEach(i => {
+          const div = document.createElement('div');
+          div.className = 'ingredient';
+          div.innerHTML = `
+            <input type="text" class="name" value="${i.name}" />
+            <input type="number" class="percent" value="${i.percent}" />
+          `;
+          ingredientContainer.appendChild(div);
+        });
+      });
+
+      alert('Saved inputs loaded!');
+    }
+  </script>
+</body>
+</html>
