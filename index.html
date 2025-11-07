@@ -3,125 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>US Dairy Ration Calculator</title>
+    <title>US Dairy Ration Pro</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #2e7d32; margin-bottom: 20px; }
-        .section { margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; padding: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; margin-bottom: 10px; }
-        button { background: #2e7d32; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; cursor: pointer; width: 100%; margin-top: 10px; }
-        button:hover { background: #1b5e20; }
-        .feed-row { display: flex; align-items: center; margin-bottom: 10px; }
-        .feed-name { flex: 1; font-weight: bold; }
-        .feed-input { width: 60px; text-align: right; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
-        #results { margin-top: 20px; white-space: pre-wrap; background: #f9f9f9; padding: 15px; border-radius: 6px; font-family: monospace; }
-        .warning { color: #d32f2f; font-weight: bold; }
-        .low { color: #f57c00; }
-        .high { color: #f57c00; }
+        :root { --green: #2e7d32; --red: #d32f2f; --orange: #f57c00; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; background: #f5f5f5; color: #333; }
+        .container { max-width: 700px; margin: 0 auto; background: white; min-height: 100vh; }
+        header { background: var(--green); color: white; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; }
+        .tabs { display: flex; background: #eee; }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; }
+        .tab.active { background: white; border-bottom: 3px solid var(--green); font-weight: bold; }
+        .content { padding: 20px; display: none; }
+        .content.active { display: block; }
+        input, select, button { padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin: 5px 0; }
+        button { background: var(--green); color: white; cursor: pointer; }
+        button.danger { background: var(--red); }
+        .group, .ingredient { background: #f9f9f9; padding: 15px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; }
+        .feed-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
+        .feed-name { flex: 1; min-width: 180px; font-weight: bold; }
+        .feed-input { width: 70px; text-align: right; }
+        #results { white-space: pre-line; background: #f0f8e8; padding: 15px; border-radius: 8px; margin-top: 20px; font-family: monospace; }
+        .warning { color: var(--red); font-weight: bold; }
+        .low { color: var(--orange); }
+        .high { color: var(--orange); }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🐄 US Dairy Ration Calculator</h1>
-        <p style="text-align: center; font-style: italic;">NRC 2021 • lb, Mcal NEₗ, $/cwt milk</p>
-
-        <div class="section">
-            <label for="cows">Number of Cows</label>
-            <input type="number" id="cows" value="100" min="1" max="1000">
-
-            <label for="milk">Milk Yield (lb/cow/day)</label>
-            <input type="number" id="milk" value="85" step="0.1" min="0">
+        <header>US Dairy Ration Pro</header>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="openTab('calculator')">Calculator</div>
+            <div class="tab" onclick="openTab('groups')">Groups</div>
+            <div class="tab" onclick="openTab('ingredients')">Ingredients</div>
         </div>
 
-        <div class="section">
-            <h3>Feed Library (edit in code)</h3>
-            <div id="feeds"></div>
+        <!-- CALCULATOR TAB -->
+        <div id="calculator" class="content active">
+            <label>Group: <select id="groupSelect"></select></label>
+            <label>Cows: <input type="number" id="cows" value="100"></label>
+            <label>Milk (lb/cow/day): <input type="number" id="milk" value="85" step="0.1"></label>
+            <div id="feedInputs"></div>
+            <button onclick="calculateRation()">CALCULATE RATION</button>
+            <div id="results"></div>
         </div>
 
-        <button onclick="calculateRation()">CALCULATE RATION</button>
+        <!-- GROUPS TAB -->
+        <div id="groups" class="content">
+            <h3>Manage Groups</h3>
+            <input type="text" id="newGroupName" placeholder="New group name">
+            <button onclick="addGroup()">Add Group</button>
+            <div id="groupList"></div>
+        </div>
 
-        <div id="results" style="display: none;"></div>
+        <!-- INGREDIENTS TAB -->
+        <div id="ingredients" class="content">
+            <h3>Ingredient Library</h3>
+            <button onclick="addIngredient()">+ Add New Ingredient</button>
+            <div id="ingredientList"></div>
+        </div>
     </div>
 
     <script>
-        // === U.S. FEED LIBRARY === (edit values here!)
-        const feeds = [
-            { name: "Corn Silage (35% DM)", dm: 35, nel: 0.74, cp: 8.5, ndf: 42, priceTon: 48 },
-            { name: "Alfalfa Haylage (40%)", dm: 40, nel: 0.68, cp: 20, ndf: 44, priceTon: 180 },
-            { name: "Dry Alfalfa Hay", dm: 88, nel: 0.62, cp: 19, ndf: 48, priceTon: 220 },
-            { name: "High-Moisture Corn", dm: 72, nel: 0.86, cp: 9, ndf: 12, priceTon: 165 },
-            { name: "Dairy 18% Pellet", dm: 89, nel: 0.84, cp: 19, ndf: 22, priceTon: 340 },
-            { name: "Soybean Meal 48%", dm: 89, nel: 0.95, cp: 53.5, ndf: 10, priceTon: 480 },
-            { name: "Distillers Grains (wet)", dm: 32, nel: 0.92, cp: 30, ndf: 38, priceTon: 135 },
-            { name: "Whole Cottonseed", dm: 92, nel: 0.98, cp: 24, ndf: 50, priceTon: 380 }
-        ];
+        // Default data
+        let data = {
+            ingredients: [
+                {id:1, name:"Corn Silage (35% DM)", dm:35, nel:0.74, cp:8.5, ndf:42, priceTon:48},
+                {id:2, name:"Alfalfa Haylage (40%)", dm:40, nel:0.68, cp:20, ndf:44, priceTon:180},
+                {id:3, name:"Dairy 18% Pellet", dm:89, nel:0.84, cp:19, ndf:22, priceTon:340},
+                {id:4, name:"Whole Cottonseed", dm:92, nel:0.98, cp:24, ndf:50, priceTon:380}
+            ],
+            groups: [
+                {id:1, name:"High Group", rations: [0,0,65,35]},
+                {id:2, name:"Fresh Cows", rations: [10,20,50,20]}
+            ]
+        };
 
-        // Build feed inputs dynamically
-        const feedsDiv = document.getElementById('feeds');
-        feeds.forEach((feed, i) => {
-            const row = document.createElement('div');
-            row.className = 'feed-row';
-            row.innerHTML = `
-                <span class="feed-name">${feed.name}</span>
-                <input type="number" class="feed-input" id="pct${i}" value="0" min="0" max="100" placeholder="0">
-                <span>%</span>
-            `;
-            feedsDiv.appendChild(row);
-        });
+        // Load from localStorage
+        if (localStorage.getItem('dairyData')) {
+            data = JSON.parse(localStorage.getItem('dairyData'));
+        }
 
-        function calculateRation() {
-            const cows = parseFloat(document.getElementById('cows').value) || 0;
-            const milk = parseFloat(document.getElementById('milk').value) || 0;
-            if (cows <= 0 || milk <= 0) return alert('Enter valid cows and milk yield!');
+        function saveData() {
+            localStorage.setItem('dairyData', JSON.stringify(data));
+        }
 
-            const percents = feeds.map((_, i) => parseFloat(document.getElementById(`pct${i}`).value) || 0);
-            const totalPct = percents.reduce((a, b) => a + b, 0);
-            if (Math.abs(totalPct - 100) > 0.1) return alert('Percentages must add to 100%!');
+        function openTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`.tab[onclick="openTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            if (tabName === 'calculator') renderCalculator();
+            if (tabName === 'groups') renderGroups();
+            if (tabName === 'ingredients') renderIngredients();
+        }
 
-            // NRC 2021 DMI (lb) for 1350 lb cow
-            const fcm = milk * (0.4 + 0.15 * 3.7);
-            const dmiCow = (0.372 * fcm + 4.4).toFixed(1);
-            const totalDMI = (cows * dmiCow).toFixed(0);
+        function renderCalculator() {
+            const groupSelect = document.getElementById('groupSelect');
+            groupSelect.innerHTML = data.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+            renderFeedInputs();
+            loadGroupRation();
+        }
 
-            let results = `HERD SUMMARY
-Cows: ${Math.round(cows)}
-Milk: ${milk.toFixed(1)} lb/cow/day → ${(cows * milk / 100).toFixed(1)} cwt/day
-DMI needed: ${dmiCow} lb/cow → ${totalDMI} lb total
+        function renderFeedInputs() {
+            const container = document.getElementById('feedInputs');
+            container.innerHTML = '<h3>Inclusions (% as-fed)</h3>' + 
+                data.ingredients.map((ing, i) => `
+                    <div class="feed-row">
+                        <span class="feed-name">${ing.name}</span>
+                        <input type="number" class="feed-input" id="pct${i}" min="0" max="100" step="1" placeholder="0">
+                        <span>%</span>
+                    </div>
+                `).join('');
+        }
 
-POUNDS AS-FED REQUIRED (total herd)
-`;
-            let nelTotal = 0, cpTotal = 0, ndfTotal = 0, costTotal = 0;
-
-            feeds.forEach((feed, i) => {
-                if (percents[i] > 0) {
-                    const dmLb = parseFloat(totalDMI) * (percents[i] / 100);
-                    const lbAsFed = (dmLb / (feed.dm / 100)).toFixed(0);
-                    results += `${feed.name}: ${lbAsFed} lb/day\n`;
-
-                    nelTotal += dmLb * feed.nel;
-                    cpTotal += dmLb * (feed.cp / 100);
-                    ndfTotal += dmLb * (feed.ndf / 100);
-                    costTotal += parseFloat(lbAsFed) * (feed.priceTon / 2000);
-                }
-            });
-
-            const nel = (nelTotal / parseFloat(totalDMI)).toFixed(3);
-            const cp = ((cpTotal / parseFloat(totalDMI)) * 100).toFixed(1);
-            const ndf = ((ndfTotal / parseFloat(totalDMI)) * 100).toFixed(1);
-
-            results += `\nRATION QUALITY (DM basis)
-NEₗ: ${nel} Mcal/lb ${nel < 0.765 ? '<span class="warning">LOW!</span>' : ''}
-CP: ${cp}% ${cp < 16.5 ? '<span class="low">LOW!</span>' : ''}
-NDF: ${ndf}% ${ndf > 34 ? '<span class="high">HIGH!</span>' : ''}
-
-FEED COST
-Total: $${costTotal.toFixed(0)}/day
-Per cow: $${(costTotal / cows).toFixed(2)}
-Per cwt milk: $${(costTotal / (cows * milk / 100)).toFixed(2)}`;
-
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = results.replace(/<span class="warning">([^<]+)<\/span>/g, '<span class="warning">$1</span>')
-                                          .replace(/<span class="low">([^<]+)<\/span>/g, '<span class="low">$1</span>')
-                                          .replace(/<span class
+        function loadGroupRation() {
+            const groupId = document.getElementById('groupSelect').value;
+            const group = data.groups.find(g => g.id == groupId);
+            if (group && group.rations) {
+                group.rations.forEach((pct,
