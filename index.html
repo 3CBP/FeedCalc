@@ -65,7 +65,7 @@
 
     <script>
         // Default data
-        let data = {
+        let defaultData = {
             ingredients: [
                 {id:1, name:"Corn Silage (35% DM)", dm:35, nel:0.74, cp:8.5, ndf:42, priceTon:48},
                 {id:2, name:"Alfalfa Haylage (40%)", dm:40, nel:0.68, cp:20, ndf:44, priceTon:180},
@@ -77,47 +77,27 @@
                 {id:2, name:"Fresh Cows", rations: [10,20,50,20]}
             ]
         };
+        let data = JSON.parse(JSON.stringify(defaultData)); // Deep copy defaults
 
-        // Load from localStorage
-        if (localStorage.getItem('dairyData')) {
-            data = JSON.parse(localStorage.getItem('dairyData'));
+        // Load from localStorage with fallback
+        try {
+            const stored = localStorage.getItem('dairyData');
+            if (stored) data = JSON.parse(stored);
+        } catch (e) {
+            console.error('LocalStorage load error:', e);
+            alert('Data saving may not work if running from a local file (file://). Host on a server like GitHub Pages for full functionality!');
         }
 
         function saveData() {
-            localStorage.setItem('dairyData', JSON.stringify(data));
+            try {
+                localStorage.setItem('dairyData', JSON.stringify(data));
+            } catch (e) {
+                console.error('LocalStorage save error:', e);
+            }
         }
 
         function openTab(tabName) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
             document.querySelector(`.tab[onclick="openTab('${tabName}')"]`).classList.add('active');
-            document.getElementById(tabName).classList.add('active');
-            if (tabName === 'calculator') renderCalculator();
-            if (tabName === 'groups') renderGroups();
-            if (tabName === 'ingredients') renderIngredients();
-        }
-
-        function renderCalculator() {
-            const groupSelect = document.getElementById('groupSelect');
-            groupSelect.innerHTML = data.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
-            renderFeedInputs();
-            loadGroupRation();
-        }
-
-        function renderFeedInputs() {
-            const container = document.getElementById('feedInputs');
-            container.innerHTML = '<h3>Inclusions (% as-fed)</h3>' + 
-                data.ingredients.map((ing, i) => `
-                    <div class="feed-row">
-                        <span class="feed-name">${ing.name}</span>
-                        <input type="number" class="feed-input" id="pct${i}" min="0" max="100" step="1" placeholder="0">
-                        <span>%</span>
-                    </div>
-                `).join('');
-        }
-
-        function loadGroupRation() {
-            const groupId = document.getElementById('groupSelect').value;
-            const group = data.groups.find(g => g.id == groupId);
-            if (group && group.rations) {
-                group.rations.forEach((pct,
+            document.getElementById(tabName
