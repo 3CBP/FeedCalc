@@ -3,45 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TMR in Pounds - BIG RESULTS</title>
+  <title>All Features Dairy Ration App</title>
   <style>
     :root { --blue: #1565c0; --dark: #0d47a1; --accent: #ff9800; --red: #d32f2f; }
     body { font-family: -apple-system, sans-serif; background: var(--blue); color: white; margin: 0; padding: 0; }
-    header { background: var(--dark); padding: 25px; text-align: center; font-size: 28px; font-weight: 900; letter-spacing: 1px; }
+    header { background: var(--dark); padding: 20px; text-align: center; font-size: 24px; font-weight: bold; }
     .tabs { display: flex; background: #1976d2; }
-    .tab { flex: 1; padding: 18px; text-align: center; cursor: pointer; font-weight: bold; font-size: 18px; }
-    .tab.active { background: white; color: var(--dark); border-bottom: 5px solid var(--accent); }
+    .tab { flex: 1; padding: 16px; text-align: center; cursor: pointer; font-weight: bold; }
+    .tab.active { background: white; color: var(--dark); border-bottom: 4px solid var(--accent); }
     .content { padding: 20px; display: none; }
     .content.active { display: block; }
-    input, select { width: 100%; padding: 16px; margin: 12px 0; border: none; border-radius: 10px; font-size: 18px; background: rgba(255,255,255,0.95); color: #000; }
-    button { width: 100%; padding: 18px; margin: 15px 0; border: none; border-radius: 10px; font-size: 22px; font-weight: 900; cursor: pointer; }
+    input, select { width: 100%; padding: 14px; margin: 10px 0; border: none; border-radius: 8px; font-size: 17px; background: rgba(255,255,255,0.95); color: #000; }
+    button { width: 100%; padding: 16px; margin: 12px 0; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
     .calc { background: var(--accent); color: black; }
     .add { background: #4caf50; color: white; }
-    .del { background: var(--red); color: white; font-size: 16px; padding: 12px; width: auto; }
-    .row { display: flex; align-items: center; gap: 15px; margin: 15px 0; background: rgba(255,255,255,0.12); padding: 15px; border-radius: 12px; }
-    .row span { flex: 1; font-weight: bold; font-size: 18px; }
-    .row input { width: 110px; text-align: center; font-size: 18px; }
-    /* === MASSIVE RESULTS === */
-    .result { 
-      background: rgba(0,0,0,0.7); 
-      padding: 30px; 
-      border-radius: 16px; 
-      margin-top: 30px; 
-      font-family: 'Courier New', monospace; 
-      line-height: 2.2; 
-      font-size: 24px; 
-      font-weight: 900; 
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-      border: 4px solid var(--accent);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-    .result span { font-size: 28px; }
-    .warn { color: #ff1744; text-shadow: 0 0 10px #ff1744; }
-    .good { color: #a5d6a7; text-shadow: 0 0 10px #a5d6a7; }
+    .del { background: var(--red); color: white; font-size: 14px; padding: 10px; width: auto; }
+    .row { display: flex; align-items: center; gap: 12px; margin: 12px 0; background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px; }
+    .row span { flex: 1; font-weight: bold; }
+    .row input[type=number] { width: 100px; text-align: center; }
+    .result { background: rgba(255,255,255,0.2); padding: 20px; border-radius: 12px; margin-top: 20px; font-family: 'Courier New', monospace; line-height: 1.8; white-space: pre-line; font-size: 20px; font-weight: bold; }
+    .warn { color: #ff5252; font-weight: bold; }
+    .good { color: #a5d6a7; }
   </style>
 </head>
 <body>
-  <header>TMR IN POUNDS</header>
+  <header>All Features Dairy Ration App</header>
   
   <div class="tabs">
     <div class="tab active" onclick="tab('calc')">Calculator</div>
@@ -50,9 +36,11 @@
   </div>
 
   <div id="calc" class="content active">
-    <select id="group"></select>
+    <select id="groupSelect"></select>
+    <select id="rationSelect"></select>
+    <button class="add" onclick="addRationToGroup()">+ New Ration for this Group</button>
     <input type="number" id="cows" placeholder="Number of cows" value="100">
-    <div style="display:flex;gap:20px;justify-content:center;font-size:18px">
+    <div style="display:flex;gap:10px">
       <label><input type="radio" name="mode" value="percow" checked> Per cow</label>
       <label><input type="radio" name="mode" value="total"> Total herd</label>
     </div>
@@ -80,3 +68,186 @@
         {id:2,name:"Alfalfa Haylage",dm:40,nel:0.68,cp:20,ndf:44,price:180},
         {id:3,name:"Dairy Pellet",dm:89,nel:0.84,cp:19,ndf:22,price:340},
         {id:4,name:"Distillers Wet",dm:32,nel:0.92,cp:30,ndf:38,price:135},
+        {id:5,name:"Cottonseed",dm:92,nel:0.98,cp:24,ndf:50,price:380}
+      ],
+      groups: [
+        {id:1,name:"Lactating",rations: [
+          {id:1,name:"Summer Ration",lbs:[24,12,8,6,2]},
+          {id:2,name:"Winter Ration",lbs:[20,15,10,5,1]}
+        ]},
+        {id:2,name:"Dry Cows",rations: [
+          {id:3,name:"Standard",lbs:[15,10,5,0,0]}
+        ]}
+      ]
+    };
+
+    try { data = JSON.parse(localStorage.dairyDB||"{}"); } catch(e) {}
+    if (!data.feeds?.length) data = JSON.parse(JSON.stringify(defaults));
+
+    function save() { localStorage.dairyDB = JSON.stringify(data); }
+
+    function tab(t) {
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.content').forEach(x=>x.classList.remove('active'));
+      document.querySelector(`[onclick="tab('${t}')"]`).classList.add('active');
+      document.getElementById(t).classList.add('active');
+      if(t==='calc') renderCalc();
+      if(t==='groups') renderGroups();
+      if(t==='feeds') renderFeeds();
+    }
+
+    function renderCalc() {
+      document.getElementById('groupSelect').innerHTML = data.groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+      updateRationSelect();
+      updateInputs();
+    }
+
+    function updateRationSelect() {
+      const gid = document.getElementById('groupSelect').value;
+      const group = data.groups.find(g=>g.id==gid);
+      document.getElementById('rationSelect').innerHTML = group.rations.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
+    }
+
+    function updateInputs() {
+      const gid = document.getElementById('groupSelect').value;
+      const rid = document.getElementById('rationSelect').value;
+      const group = data.groups.find(g=>g.id==gid);
+      const ration = group.rations.find(r=>r.id==rid);
+      let html = '';
+      data.feeds.forEach((f,i) => {
+        html += `<div class="row">
+          <span>${f.name}</span>
+          <input type="number" id="lb${i}" value="${ration.lbs[i]||0}" step="0.1">
+          <span>lb</span>
+        </div>`;
+      });
+      document.getElementById('inputs').innerHTML = html;
+    }
+
+    function addRationToGroup() {
+      const name = prompt("New ration name:");
+      if(!name) return;
+      const gid = document.getElementById('groupSelect').value;
+      const group = data.groups.find(g=>g.id==gid);
+      group.rations.push({id:Date.now(),name,lbs:new Array(data.feeds.length).fill(0)});
+      save();
+      updateRationSelect();
+      document.getElementById('rationSelect').value = group.rations[group.rations.length-1].id;
+      updateInputs();
+    }
+
+    function calc() {
+      const gid = document.getElementById('groupSelect').value;
+      const rid = document.getElementById('rationSelect').value;
+      const cows = parseFloat(document.getElementById('cows').value)||1;
+      const perCow = document.querySelector('input[name="mode"]:checked').value === 'percow';
+      const group = data.groups.find(g=>g.id==gid);
+      const ration = group.rations.find(r=>r.id==rid);
+
+      data.feeds.forEach((f,i) => ration.lbs[i] = parseFloat(document.getElementById(`lb${i}`).value)||0);
+      save();
+
+      let totalAsFed = ration.lbs.reduce((a,b)=>a+b,0);
+      if (totalAsFed === 0) {
+        document.getElementById('result').innerHTML = '<span class="warn">ENTER INGREDIENTS!</span>';
+        return;
+      }
+
+      const multiplier = perCow ? 1 : (1/cows);
+      const herdAsFed = totalAsFed / multiplier;
+
+      let dmTotal = 0, nelW = 0, cpW = 0, ndfW = 0, costW = 0;
+      let lines = `GROUP: ${group.name}\nRATION: ${ration.name}\n\nFOR ${perCow ? '1 COW' : cows + ' COWS'}\nTOTAL AS-FED: ${herdAsFed.toFixed(1)} lb\n\nINGREDIENTS (lb as-fed)\n`;
+
+      data.feeds.forEach((f,i) => {
+        if (ration.lbs[i] > 0) {
+          const lb = ration.lbs[i] / multiplier;
+          const pct = (lb / herdAsFed) * 100;
+          const dmLb = lb * (f.dm/100);
+          lines += `${f.name}: ${lb.toFixed(1)} lb (${pct.toFixed(1)}%)\n`;
+          dmTotal += dmLb;
+          nelW += dmLb * f.nel;
+          cpW += dmLb * (f.cp/100);
+          ndfW += dmLb * (f.ndf/100);
+          costW += lb * (f.price/2000);
+        }
+      });
+
+      const nel = nelW / dmTotal;
+      const cp = (cpW / dmTotal) * 100;
+      const ndf = (ndfW / dmTotal) * 100;
+      const dmi = dmTotal / (perCow ? 1 : cows);
+
+      lines += `\nDM INTAKE: ${dmi.toFixed(1)} lb\nNEₗ: ${nel.toFixed(3)} Mcal/lb ${nel>=0.76?'<span class="good">GOOD</span>':'<span class="warn">LOW</span>'}\nCP: ${cp.toFixed(1)}% ${cp>=16.5?'<span class="good">GOOD</span>':'<span class="warn">LOW</span>'}\nNDF: ${ndf.toFixed(1)}% ${ndf<=38?'<span class="good">GOOD</span>':'<span class="warn">HIGH</span>'}\n\nCOST: $${costW.toFixed(0)} / ${perCow?'cow/day':'herd/day'}`;
+
+      document.getElementById('result').innerHTML = lines;
+    }
+
+    function renderGroups() {
+      let html = '';
+      data.groups.forEach(g => {
+        html += `<div style="margin-bottom:20px">
+          <div class="row">
+            <input value="${g.name}" onchange="data.groups.find(x=>x.id==${g.id}).name=this.value;save();">
+            <button class="del" onclick="if(confirm('Delete group and all rations?')){data.groups=data.groups.filter(x=>x.id!=${g.id});save();renderGroups();renderCalc()}">Delete Group</button>
+          </div>
+          <div style="padding-left:20px">
+            ${g.rations.map(r=>`
+              <div class="row">
+                <input value="${r.name}" onchange="data.groups.find(x=>x.id==${g.id}).rations.find(y=>y.id==${r.id}).name=this.value;save();">
+                <button class="del" onclick="if(confirm('Delete ration?')){data.groups.find(x=>x.id==${g.id}).rations=data.groups.find(x=>x.id==${g.id}).rations.filter(y=>y.id!=${r.id});save();renderGroups();renderCalc()}">Delete Ration</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      });
+      document.getElementById('grouplist').innerHTML = html;
+    }
+
+    function addGroup() {
+      const name = document.getElementById('newgroup').value.trim() || 'New Group';
+      data.groups.push({id:Date.now(),name,rations:[]});
+      save(); document.getElementById('newgroup').value=''; renderGroups(); renderCalc();
+    }
+
+    function renderFeeds() {
+      document.getElementById('feedlist').innerHTML = data.feeds.map(f=>`
+        <div style="background:rgba(255,255,255,0.1);padding:15px;margin:12px 0;border-radius:12px">
+          <input value="${f.name}" onchange="edit(${f.id},'name',this.value)">
+          <div class="row"><input type="number" value="${f.dm}" step="0.1" onchange="edit(${f.id},'dm',this.value)"> DM%</div>
+          <div class="row"><input type="number" value="${f.nel}" step="0.001" onchange="edit(${f.id},'nel',this.value)"> NEₗ</div>
+          <div class="row"><input type="number" value="${f.cp}" step="0.1" onchange="edit(${f.id},'cp',this.value)"> CP%</div>
+          <div class="row"><input type="number" value="${f.ndf}" step="0.1" onchange="edit(${f.id},'ndf',this.value)"> NDF%</div>
+          <div class="row"><input type="number" value="${f.price}" step="1" onchange="edit(${f.id},'price',this.value)"> $/ton</div>
+          <button class="del" onclick="delFeed(${f.id})">Delete</button>
+        </div>`).join('');
+    }
+
+    function edit(id,fld,val) {
+      const feed = data.feeds.find(x=>x.id==id);
+      feed[fld] = fld==='name'?val:parseFloat(val)||0;
+      save();
+    }
+
+    function addFeed() {
+      const n = prompt("Ingredient name:");
+      if(n){ data.feeds.push({id:Date.now(),name:n,dm:88,nel:0.80,cp:18,ndf:25,price:300});
+      data.groups.forEach(g=>g.rations.forEach(r=>r.lbs.push(0))); save(); renderFeeds(); renderCalc(); }
+    }
+
+    function delFeed(id) {
+      if(confirm('Delete from all?')){
+        const i = data.feeds.findIndex(x=>x.id==id);
+        data.feeds.splice(i,1);
+        data.groups.forEach(g=>g.rations.forEach(r=>r.lbs.splice(i,1)));
+        save(); renderFeeds(); renderCalc();
+      }
+    }
+
+    document.getElementById('groupSelect').onchange = () => {updateRationSelect(); updateInputs();};
+    document.getElementById('rationSelect').onchange = updateInputs;
+    document.querySelectorAll('input[name="mode"]').forEach(r=>r.onchange=updateInputs);
+    renderCalc();
+  </script>
+</body>
+</html>
