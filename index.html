@@ -100,3 +100,112 @@
       });
       document.getElementById('inputs').innerHTML = html;
     }
+
+    function calc() {
+      const gid = document.getElementById('group').value;
+      const group = data.groups.find(g=>g.id==gid);
+      const cows = parseFloat(document.getElementById('cows').value)||1;
+      const perCow = document.querySelector('input[name="mode"]:checked').value === 'percow';
+
+      // Save inputs
+      data.feeds.forEach((f,i) => {
+        group.lbs[i] = parseFloat(document.getElementById(`lb${i}`).value)||0;
+      });
+      save();
+
+      let totalAsFed = group.lbs.reduce((a,b)=>a+b,0);
+      if (totalAsFed === 0) {
+        document.getElementById('result').innerHTML = '<span class="warn">Enter at least one ingredient!</span>';
+        return;
+      }
+
+      const multiplier = perCow ? 1 : (1/cows);
+      const herdAsFed = totalAsFed / multiplier;
+
+      let dmTotal = 0, nelW = 0, cpW = 0, ndfW = 0, costW = 0;
+      let lines = `TMR FOR ${perCow ? '1 COW' : `${cows} COWS`}\nTotal as-fed: ${herdAsFed.toFixed(1)} lb\n\nINGREDIENTS (as-fed lb)\n`;
+
+      data.feeds.forEach((f,i) => {
+        if (group.lbs[i] > 0) {
+          const lb = group.lbs[i] / multiplier;
+          const pct = (lb / herdAsFed) * 100;
+          const dmLb = lb * (f.dm/100);
+          lines += `${f.name}: ${lb.toFixed(1)} lb (${pct.toFixed(1)}%)\n`;
+          dmTotal += dmLb;
+          nelW += dmLb * f.nel;
+          cpW += dmLb * (f.cp/100);
+          ndfW += dmLb * (f.ndf/100);
+          costW += lb * (f.price/2000);
+        }
+      });
+
+      const nel = nelW / dmTotal;
+      const cp = (cpW / dmTotal) * 100;
+      const ndf = (ndfW / dmTotal) * 100;
+      const dmi = dmTotal / (perCow ? 1 : cows);
+
+      lines += `\nDM INTAKE: ${dmi.toFixed(1)} lb/${perCow?'cow':'total'}\n`;
+      lines += `RATION ON DM BASIS\n`;
+      lines += `NEₗ: ${nel.toFixed(3)} Mcal/lb ${nel>=0.76?'<span class="good">Good</span>':''}\n`;
+      lines += `CP: ${cp.toFixed(1)}% ${cp>=16.5?'<span class="good">Good</span>':''}\n`;
+      lines += `NDF: ${ndf.toFixed(1)}% ${ndf<=38?'<span class="good">Good</span>':''}\n\n`;
+      lines += `FEED COST: $${costW.toFixed(0)} / ${perCow?'day':'herd/day'}\n`;
+      if (perCow) lines += `→ $${(costW*365/100).toFixed(1)} / cwt milk (at 85 lb)`;
+
+      document.getElementById('result').innerHTML = lines;
+    }
+
+    function renderGroups() {
+      document.getElementById('grouplist').innerHTML = data.groups.map(g=>`
+        <div class="row">
+          <input value="${g.name}" onchange="data.groups.find(x=>x.id==${g.id}).name=this.value;save();">
+          <button class="del" onclick="if(confirm('Delete?')){data.groups=data.groups.filter(x=>x.id!=${g.id});save();renderGroups();render()}">Delete</button>
+        </div>`).join('');
+    }
+
+    function addGroup() {
+      const n = document.getElementById('newgroup').value.trim()||'New Group';
+      data.groups.push({id:Date.now(),name:n,lbs:new Array(data.feeds.length).fill(0)});
+      save(); document.getElementById('newgroup').value=''; renderGroups(); render();
+    }
+
+    function renderFeeds() {
+      document.getElementById('feedlist').innerHTML = data.feeds.map(f=>`
+        <div style="background:rgba(255,255,255,0.1);padding:15px;margin:12px 0;border-radius:12px">
+          <input value="${f.name}" onchange="edit(${f.id},'name',this.value)">
+          <div class="row"><input type="number" value="${f.dm}" step="0.1" onchange="edit(${f.id},'dm',this.value)"> DM%</div>
+          <div class="row"><input type="number" value="${f.nel}" step="0.001" onchange="edit(${f.id},'nel',this.value)"> NEₗ</div>
+          <div class="row"><input type="number" value="${f.cp}" step="0.1" onchange="edit(${f.id},'cp',this.value)"> CP%</div>
+          <div class="row"><input type="number" value="${f.ndf}" step="0.1" onchange="edit(${f.id},'ndf',this.value)"> NDF%</div>
+          <div class="row"><input type="number" value="${f.price}" step="1" onchange="edit(${f.id},'price',this.value)"> $/ton</div>
+          <button class="del" onclick="delFeed(${f.id})">Delete</button>
+        </div>`).join('');
+    }
+
+    function edit(id,fld,val) {
+      const feed = data.feeds.find(x=>x.id==id);
+      feed[fld] = fld==='name'?val:parseFloat(val)||0;
+      save();
+    }
+
+    function addFeed() {
+      const n = prompt("Ingredient name:");
+      if(n){ data.feeds.push({id:Date.now(),name:n,dm:88,nel:0.80,cp:18,ndf:25,price:300});
+      data.groups.forEach(g=>g.lbs.push(0)); save(); renderFeeds(); render(); }
+    }
+
+    function delFeed(id) {
+      if(confirm('Delete from all groups?')){
+        const i = data.feeds.findIndex(x=>x.id==id);
+        data.feeds.splice(i,1);
+        data.groups.forEach(g=>g.lbs.splice(i,1));
+        save(); renderFeeds(); render();
+      }
+    }
+
+    document.getElementById('group').onchange = render;
+    document.querySelectorAll('input[name="mode"]').forEach(r=>r.onchange=render);
+    render();
+  </script>
+</body>
+</html>
