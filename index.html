@@ -211,4 +211,76 @@
         </div>
       </div>`;
 
-      document.getElementById('result').
+      document.getElementById('result').innerHTML = sheet;
+    }
+
+    function renderGroups() {
+      let html = '';
+      data.groups.forEach(g => {
+        html += `<div style="margin:20px 0;background:rgba(255,255,255,0.1);padding:15px;border-radius:12px">
+          <div class="row"><input value="${g.name}" onchange="renameGroup(${g.id},this.value)">
+            <button class="del" onclick="delGroup(${g.id})">Delete Group</button>
+          </div>
+          ${g.rations.map(r=>`
+            <div class="row" style="margin-left:20px;">
+              <input value="${r.name}" onchange="renameRation(${g.id},${r.id},this.value)">
+              <button class="del" onclick="delRation(${g.id},${r.id})">Delete</button>
+            </div>
+          `).join('')}
+        </div>`;
+      });
+      document.getElementById('grouplist').innerHTML = html;
+    }
+
+    function renameGroup(id,val){ data.groups.find(g=>g.id==id).name=val; save(); renderCalc(); }
+    function renameRation(gid,rid,val){ data.groups.find(g=>g.id==gid).rations.find(r=>r.id==rid).name=val; save(); renderCalc(); }
+    function delGroup(id){ if(confirm('Delete entire group?')){ data.groups=data.groups.filter(g=>g.id!=id); save(); renderGroups(); renderCalc(); } }
+    function delRation(gid,rid){ if(confirm('Delete ration?')){ data.groups.find(g=>g.id==gid).rations=data.groups.find(g=>g.id==gid).rations.filter(r=>r.id!=rid); save(); renderGroups(); renderCalc(); } }
+
+    function addGroup() {
+      const name = prompt("Group name:") || "New Group";
+      data.groups.push({id:Date.now(),name,rations:[]});
+      save(); renderGroups(); renderCalc();
+    }
+
+    function renderFeeds() {
+      document.getElementById('feedlist').innerHTML = data.feeds.map(f=>`
+        <div style="background:rgba(255,255,255,0.12);padding:18px;margin:15px 0;border-radius:14px">
+          <input value="${f.name}" onchange="edit(${f.id},'name',this.value)" style="font-size:20px;font-weight:bold">
+          <div class="row"><input type="number" value="${f.dm}" step="0.1" onchange="edit(${f.id},'dm',this.value)"> DM%</div>
+          <div class="row"><input type="number" value="${f.nel}" step="0.001" onchange="edit(${f.id},'nel',this.value)"> NEₗ</div>
+          <div class="row"><input type="number" value="${f.cp}" step="0.1" onchange="edit(${f.id},'cp',this.value)"> CP%</div>
+          <div class="row"><input type="number" value="${f.ndf}" step="0.1" onchange="edit(${f.id},'ndf',this.value)"> NDF%</div>
+          <div class="row"><input type="number" value="${f.price}" step="1" onchange="edit(${f.id},'price',this.value)"> $/ton</div>
+          <button class="del" onclick="delFeed(${f.id})">Delete</button>
+        </div>`).join('');
+    }
+
+    function edit(id,fld,val) {
+      const feed = data.feeds.find(x=>x.id==id);
+      feed[fld] = fld==='name'?val:parseFloat(val)||0;
+      save();
+    }
+
+    function addFeed() {
+      const n = prompt("Ingredient name:");
+      if(n){ data.feeds.push({id:Date.now(),name:n,dm:88,nel:0.80,cp:18,ndf:25,price:300});
+      data.groups.forEach(g=>g.rations.forEach(r=>r.lbs.push(0))); save(); renderFeeds(); renderCalc(); }
+    }
+
+    function delFeed(id) {
+      if(confirm('Delete from ALL groups & rations?')){
+        const i = data.feeds.findIndex(x=>x.id==id);
+        data.feeds.splice(i,1);
+        data.groups.forEach(g=>g.rations.forEach(r=>r.lbs.splice(i,1)));
+        save(); renderFeeds(); renderCalc();
+      }
+    }
+
+    document.getElementById('groupSelect').onchange = () => { updateRationSelect(); updateInputs(); };
+    document.getElementById('rationSelect').onchange = updateInputs;
+    document.querySelectorAll('input[name="mode"]').forEach(r=>r.onchange=updateInputs);
+    renderCalc();
+  </script>
+</body>
+</html>
