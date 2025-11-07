@@ -1,230 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Feed Ration Manager</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      max-width: 1000px;
-      margin: auto;
-      padding: 1em;
-    }
-    input, button, select {
-      margin: 0.3em 0;
-      padding: 0.5em;
-      width: 100%;
-      font-size: 1em;
-    }
-    .ration, .group, .ingredient {
-      margin: 1em 0;
-      border: 1px solid #ccc;
-      padding: 1em;
-      border-radius: 6px;
-    }
-    .totals, .breakdown {
-      margin-top: 0.5em;
-      font-weight: bold;
-      white-space: pre-line;
-    }
-    @media print {
-      button, input, select {
-        display: none;
-      }
-      .ration {
-        page-break-inside: avoid;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US Dairy Ration Calculator</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2e7d32; margin-bottom: 20px; }
+        .section { margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; padding: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; margin-bottom: 10px; }
+        button { background: #2e7d32; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; cursor: pointer; width: 100%; margin-top: 10px; }
+        button:hover { background: #1b5e20; }
+        .feed-row { display: flex; align-items: center; margin-bottom: 10px; }
+        .feed-name { flex: 1; font-weight: bold; }
+        .feed-input { width: 60px; text-align: right; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        #results { margin-top: 20px; white-space: pre-wrap; background: #f9f9f9; padding: 15px; border-radius: 6px; font-family: monospace; }
+        .warning { color: #d32f2f; font-weight: bold; }
+        .low { color: #f57c00; }
+        .high { color: #f57c00; }
+    </style>
 </head>
 <body>
-  <h2>Feed Ration Manager</h2>
+    <div class="container">
+        <h1>🐄 US Dairy Ration Calculator</h1>
+        <p style="text-align: center; font-style: italic;">NRC 2021 • lb, Mcal NEₗ, $/cwt milk</p>
 
-  <label>📌 New Ration Name:</label>
-  <input type="text" id="newRationName" />
-  <button onclick="addRation()">➕ Create Ration</button>
+        <div class="section">
+            <label for="cows">Number of Cows</label>
+            <input type="number" id="cows" value="100" min="1" max="1000">
 
-  <label>📂 Load Saved Ration:</label>
-  <select id="rationSelect" onchange="loadRation(this.value)">
-    <option value="">--Select--</option>
-  </select>
-  <button onclick="deleteRation()">🗑️ Delete</button>
-  <button onclick="window.print()">🖨️ Print All</button>
-  <button onclick="exportAllRations()">📤 Backup All</button>
-  <input type="file" onchange="importRations(event)" />
+            <label for="milk">Milk Yield (lb/cow/day)</label>
+            <input type="number" id="milk" value="85" step="0.1" min="0">
+        </div>
 
-  <div id="rations"></div>
-<script>
-  function addRation() {
-    const name = document.getElementById('newRationName').value.trim();
-    if (!name) return alert("Enter a ration name.");
-    const container = document.getElementById('rations');
-    const ration = document.createElement('div');
-    ration.className = 'ration';
-    ration.setAttribute('data-name', name);
-    ration.innerHTML = `
-      <h3>${name}</h3>
-      <div class="groups"><h4>Groups</h4></div>
-      <button onclick="addGroup(this)">➕ Add Group</button>
-      <div class="ingredients"><h4>Ingredients</h4></div>
-      <button onclick="addIngredient(this)">➕ Add Ingredient</button>
-      <button onclick="exportCSV(this)">📤 Export CSV</button>
-      <button onclick="saveRation('${name}')">💾 Save Ration</button>
-      <div class="totals"></div>
-      <div class="breakdown"></div>
-    `;
-    container.appendChild(ration);
-    updateRationList();
-  }
+        <div class="section">
+            <h3>Feed Library (edit in code)</h3>
+            <div id="feeds"></div>
+        </div>
 
-  function addGroup(button) {
-    const container = button.previousElementSibling;
-    const div = document.createElement('div');
-    div.className = 'group';
-    div.innerHTML = `
-      <input type="text" placeholder="Group name" class="groupName">
-      <input type="number" placeholder="Number of cows" class="cowCount" oninput="updateTotals(this)">
-    `;
-    container.appendChild(div);
-    updateTotals(button);
-  }
+        <button onclick="calculateRation()">CALCULATE RATION</button>
 
-  function addIngredient(button) {
-    const container = button.previousElementSibling;
-    const div = document.createElement('div');
-    div.className = 'ingredient';
-    div.innerHTML = `
-      <input type="text" placeholder="Ingredient name" class="name">
-      <input type="number" placeholder="Lbs/cow/day" class="pounds" oninput="updateTotals(this)">
-      <input type="number" placeholder="Cost/lb ($)" class="costPerLb" oninput="updateTotals(this)">
-    `;
-    container.appendChild(div);
-    updateTotals(button);
-  }
-</script>
-<script>
-  function updateTotals(inputEl) {
-    const ration = inputEl.closest('.ration');
-    const cowCounts = ration.querySelectorAll('.cowCount');
-    const ingredients = ration.querySelectorAll('.ingredient');
+        <div id="results" style="display: none;"></div>
+    </div>
 
-    let groups = [];
-    cowCounts.forEach((cow, i) => {
-      const groupName = cow.closest('.group').querySelector('.groupName').value || `Group ${i+1}`;
-      const cows = parseFloat(cow.value);
-      if (!isNaN(cows)) groups.push({ name: groupName, cows });
-    });
+    <script>
+        // === U.S. FEED LIBRARY === (edit values here!)
+        const feeds = [
+            { name: "Corn Silage (35% DM)", dm: 35, nel: 0.74, cp: 8.5, ndf: 42, priceTon: 48 },
+            { name: "Alfalfa Haylage (40%)", dm: 40, nel: 0.68, cp: 20, ndf: 44, priceTon: 180 },
+            { name: "Dry Alfalfa Hay", dm: 88, nel: 0.62, cp: 19, ndf: 48, priceTon: 220 },
+            { name: "High-Moisture Corn", dm: 72, nel: 0.86, cp: 9, ndf: 12, priceTon: 165 },
+            { name: "Dairy 18% Pellet", dm: 89, nel: 0.84, cp: 19, ndf: 22, priceTon: 340 },
+            { name: "Soybean Meal 48%", dm: 89, nel: 0.95, cp: 53.5, ndf: 10, priceTon: 480 },
+            { name: "Distillers Grains (wet)", dm: 32, nel: 0.92, cp: 30, ndf: 38, priceTon: 135 },
+            { name: "Whole Cottonseed", dm: 92, nel: 0.98, cp: 24, ndf: 50, priceTon: 380 }
+        ];
 
-    let grandTotal = 0;
-    let grandCost = 0;
-    let ingredientSums = {}, ingredientCosts = {};
-    let ingredientList = [];
+        // Build feed inputs dynamically
+        const feedsDiv = document.getElementById('feeds');
+        feeds.forEach((feed, i) => {
+            const row = document.createElement('div');
+            row.className = 'feed-row';
+            row.innerHTML = `
+                <span class="feed-name">${feed.name}</span>
+                <input type="number" class="feed-input" id="pct${i}" value="0" min="0" max="100" placeholder="0">
+                <span>%</span>
+            `;
+            feedsDiv.appendChild(row);
+        });
 
-    ingredients.forEach((ing, i) => {
-      const name = ing.querySelector('.name').value || `Ingredient ${i+1}`;
-      const pounds = parseFloat(ing.querySelector('.pounds').value);
-      const costPerLb = parseFloat(ing.querySelector('.costPerLb').value) || 0;
-      if (isNaN(pounds)) return;
+        function calculateRation() {
+            const cows = parseFloat(document.getElementById('cows').value) || 0;
+            const milk = parseFloat(document.getElementById('milk').value) || 0;
+            if (cows <= 0 || milk <= 0) return alert('Enter valid cows and milk yield!');
 
-      ingredientSums[name] = 0;
-      ingredientCosts[name] = costPerLb;
-      ingredientList.push({ name, pounds, costPerLb });
+            const percents = feeds.map((_, i) => parseFloat(document.getElementById(`pct${i}`).value) || 0);
+            const totalPct = percents.reduce((a, b) => a + b, 0);
+            if (Math.abs(totalPct - 100) > 0.1) return alert('Percentages must add to 100%!');
 
-      groups.forEach(g => {
-        const amt = pounds * g.cows;
-        ingredientSums[name] += amt;
-        grandTotal += amt;
-        grandCost += amt * costPerLb;
-      });
-    });
+            // NRC 2021 DMI (lb) for 1350 lb cow
+            const fcm = milk * (0.4 + 0.15 * 3.7);
+            const dmiCow = (0.372 * fcm + 4.4).toFixed(1);
+            const totalDMI = (cows * dmiCow).toFixed(0);
 
-    let summary = `🧮 Ingredient Totals:\n`;
-    for (let name in ingredientSums) {
-      const cost = ingredientSums[name] * ingredientCosts[name];
-      summary += `  ${name}: ${ingredientSums[name].toFixed(2)} lbs ($${cost.toFixed(2)})\n`;
-    }
-    summary += `📦 Total Feed: ${grandTotal.toFixed(2)} lbs\n💰 Total Cost: $${grandCost.toFixed(2)}`;
-    ration.querySelector('.totals').textContent = summary;
+            let results = `HERD SUMMARY
+Cows: ${Math.round(cows)}
+Milk: ${milk.toFixed(1)} lb/cow/day → ${(cows * milk / 100).toFixed(1)} cwt/day
+DMI needed: ${dmiCow} lb/cow → ${totalDMI} lb total
 
-    let breakdown = `📘 Group Breakdown:\n`;
-    groups.forEach(g => {
-      breakdown +=
-<script>
-  function loadRation(name) {
-    if (!name) return;
-    const stored = localStorage.getItem('ration_' + name);
-    if (!stored) return alert("No data found.");
-    const data = JSON.parse(stored);
+POUNDS AS-FED REQUIRED (total herd)
+`;
+            let nelTotal = 0, cpTotal = 0, ndfTotal = 0, costTotal = 0;
 
-    addRation();
-    const ration = document.querySelectorAll('.ration')[document.querySelectorAll('.ration').length - 1];
-    ration.setAttribute('data-name', name);
-    ration.querySelector('h3').textContent = name;
+            feeds.forEach((feed, i) => {
+                if (percents[i] > 0) {
+                    const dmLb = parseFloat(totalDMI) * (percents[i] / 100);
+                    const lbAsFed = (dmLb / (feed.dm / 100)).toFixed(0);
+                    results += `${feed.name}: ${lbAsFed} lb/day\n`;
 
-    data.groups.forEach(g => {
-      const div = document.createElement('div');
-      div.className = 'group';
-      div.innerHTML = `
-        <input type="text" class="groupName" value="${g.name}">
-        <input type="number" class="cowCount" value="${g.cows}" oninput="updateTotals(this)">
-      `;
-      ration.querySelector('.groups').appendChild(div);
-    });
+                    nelTotal += dmLb * feed.nel;
+                    cpTotal += dmLb * (feed.cp / 100);
+                    ndfTotal += dmLb * (feed.ndf / 100);
+                    costTotal += parseFloat(lbAsFed) * (feed.priceTon / 2000);
+                }
+            });
 
-    data.ingredients.forEach(i => {
-      const div = document.createElement('div');
-      div.className = 'ingredient';
-      div.innerHTML = `
-        <input type="text" class="name" value="${i.name}">
-        <input type="number" class="pounds" value="${i.pounds}" oninput="updateTotals(this)">
-        <input type="number" class="costPerLb" value="${i.costPerLb}" oninput="updateTotals(this)">
-      `;
-      ration.querySelector('.ingredients').appendChild(div);
-    });
+            const nel = (nelTotal / parseFloat(totalDMI)).toFixed(3);
+            const cp = ((cpTotal / parseFloat(totalDMI)) * 100).toFixed(1);
+            const ndf = ((ndfTotal / parseFloat(totalDMI)) * 100).toFixed(1);
 
-    updateTotals(ration.querySelector('.pounds') || ration.querySelector('.cowCount'));
-  }
+            results += `\nRATION QUALITY (DM basis)
+NEₗ: ${nel} Mcal/lb ${nel < 0.765 ? '<span class="warning">LOW!</span>' : ''}
+CP: ${cp}% ${cp < 16.5 ? '<span class="low">LOW!</span>' : ''}
+NDF: ${ndf}% ${ndf > 34 ? '<span class="high">HIGH!</span>' : ''}
 
-  function exportCSV(button) {
-    const ration = button.closest('.ration');
-    const name = ration.getAttribute('data-name') || 'Ration';
-    const rows = [];
+FEED COST
+Total: $${costTotal.toFixed(0)}/day
+Per cow: $${(costTotal / cows).toFixed(2)}
+Per cwt milk: $${(costTotal / (cows * milk / 100)).toFixed(2)}`;
 
-    rows.push(["Ration Name", name]);
-    rows.push([]);
-
-    rows.push(["Group Name", "Cows"]);
-    ration.querySelectorAll('.group').forEach(g => {
-      const gn = g.querySelector('.groupName').value;
-      const cc = g.querySelector('.cowCount').value;
-      rows.push([gn, cc]);
-    });
-
-    rows.push([]);
-    rows.push(["Ingredient", "Lbs/cow/day", "Cost/lb ($)"]);
-    ration.querySelectorAll('.ingredient').forEach(i => {
-      const n = i.querySelector('.name').value;
-      const p = i.querySelector('.pounds').value;
-      const c = i.querySelector('.costPerLb').value;
-      rows.push([n, p, c]);
-    });
-
-    let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", name + ".csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-
-  function exportAllRations() {
-    const all = {};
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith("ration_")) {
-        all[key] = localStorage.getItem(key);
-      }
-    });
-    const blob = new Blob
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = results.replace(/<span class="warning">([^<]+)<\/span>/g, '<span class="warning">$1</span>')
+                                          .replace(/<span class="low">([^<]+)<\/span>/g, '<span class="low">$1</span>')
+                                          .replace(/<span class
