@@ -1,103 +1,196 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>US Dairy Ration Pro</title>
-    <style>
-        :root { --green: #2e7d32; --red: #d32f2f; --orange: #f57c00; }
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; background: #f5f5f5; color: #333; }
-        .container { max-width: 700px; margin: 0 auto; background: white; min-height: 100vh; }
-        header { background: var(--green); color: white; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; }
-        .tabs { display: flex; background: #eee; }
-        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; }
-        .tab.active { background: white; border-bottom: 3px solid var(--green); font-weight: bold; }
-        .content { padding: 20px; display: none; }
-        .content.active { display: block; }
-        input, select, button { padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin: 5px 0; }
-        button { background: var(--green); color: white; cursor: pointer; }
-        button.danger { background: var(--red); }
-        .group, .ingredient { background: #f9f9f9; padding: 15px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; }
-        .feed-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
-        .feed-name { flex: 1; min-width: 180px; font-weight: bold; }
-        .feed-input { width: 70px; text-align: right; }
-        #results { white-space: pre-line; background: #f0f8e8; padding: 15px; border-radius: 8px; margin-top: 20px; font-family: monospace; }
-        .warning { color: var(--red); font-weight: bold; }
-        .low { color: var(--orange); }
-        .high { color: var(--orange); }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>US Dairy Ration Calculator</title>
+  <style>
+    body{font-family:-apple-system,Arial;background:#f8f8f8;margin:0;padding:0}
+    h1{background:#2e7d32;color:white;text-align:center;padding:20px;margin:0;font-size:20px}
+    .tab{background:#ddd;display:flex}
+    .tab button{flex:1;padding:15px;border:none;background:#ddd;font-size:16px}
+    .tab button.active{background:white;border-bottom:3px solid #2e7d32;font-weight:bold}
+    .content{padding:20px;display:none}
+    .active{display:block}
+    input,select{padding:12px;margin:8px 0;border:1px solid #ccc;border-radius:6px;width:100%;box-sizing:border-box;font-size:16px}
+    button{padding:14px;background:#2e7d32;color:white;border:none;border-radius:6px;font-size:16px;margin:10px 0}
+    .del{background:#d32f2f}
+    .row{display:flex;gap:10px;align-items:center;margin:10px 0}
+    .row input[type=number]{width:80px;text-align:center}
+    .result{background:#e8f5e8;padding:15px;border-radius:8px;margin-top:20px;font-family:monospace;white-space:pre-line}
+    .warn{color:#d32f2f;font-weight:bold}
+    .low{color:#e65100}
+    .high{color:#e65100}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>US Dairy Ration Pro</header>
-        
-        <div class="tabs">
-            <div class="tab active" onclick="openTab('calculator')">Calculator</div>
-            <div class="tab" onclick="openTab('groups')">Groups</div>
-            <div class="tab" onclick="openTab('ingredients')">Ingredients</div>
-        </div>
+  <h1>US Dairy Ration Calculator</h1>
+  <div class="tab">
+    <button class="active" onclick="tab('calc')">Calculator</button>
+    <button onclick="tab('groups')">Groups</button>
+    <button onclick="tab('feeds')">Ingredients</button>
+  </div>
 
-        <!-- CALCULATOR TAB -->
-        <div id="calculator" class="content active">
-            <label>Group: <select id="groupSelect"></select></label>
-            <label>Cows: <input type="number" id="cows" value="100"></label>
-            <label>Milk (lb/cow/day): <input type="number" id="milk" value="85" step="0.1"></label>
-            <div id="feedInputs"></div>
-            <button onclick="calculateRation()">CALCULATE RATION</button>
-            <div id="results"></div>
-        </div>
+  <!-- CALCULATOR -->
+  <div id="calc" class="content active">
+    <select id="group"></select>
+    <input type="number" id="cows" placeholder="Cows" value="100">
+    <input type="number" id="milk" placeholder="Milk lb/cow/day" value="85" step="0.1">
+    <div id="ingredients"></div>
+    <button onclick="calc()">CALCULATE</button>
+    <div id="output" class="result"></div>
+  </div>
 
-        <!-- GROUPS TAB -->
-        <div id="groups" class="content">
-            <h3>Manage Groups</h3>
-            <input type="text" id="newGroupName" placeholder="New group name">
-            <button onclick="addGroup()">Add Group</button>
-            <div id="groupList"></div>
-        </div>
+  <!-- GROUPS -->
+  <div id="groups" class="content">
+    <input type="text" id="newgroup" placeholder="New group name">
+    <button onclick="addGroup()">Add Group</button>
+    <div id="grouplist"></div>
+  </div>
 
-        <!-- INGREDIENTS TAB -->
-        <div id="ingredients" class="content">
-            <h3>Ingredient Library</h3>
-            <button onclick="addIngredient()">+ Add New Ingredient</button>
-            <div id="ingredientList"></div>
-        </div>
-    </div>
+  <!-- INGREDIENTS -->
+  <div id="feeds" class="content">
+    <button onclick="addFeed()">+ Add Ingredient</button>
+    <div id="feedlist"></div>
+  </div>
 
-    <script>
-        // Default data
-        let defaultData = {
-            ingredients: [
-                {id:1, name:"Corn Silage (35% DM)", dm:35, nel:0.74, cp:8.5, ndf:42, priceTon:48},
-                {id:2, name:"Alfalfa Haylage (40%)", dm:40, nel:0.68, cp:20, ndf:44, priceTon:180},
-                {id:3, name:"Dairy 18% Pellet", dm:89, nel:0.84, cp:19, ndf:22, priceTon:340},
-                {id:4, name:"Whole Cottonseed", dm:92, nel:0.98, cp:24, ndf:50, priceTon:380}
-            ],
-            groups: [
-                {id:1, name:"High Group", rations: [0,0,65,35]},
-                {id:2, name:"Fresh Cows", rations: [10,20,50,20]}
-            ]
-        };
-        let data = JSON.parse(JSON.stringify(defaultData)); // Deep copy defaults
+<script>
+  let data = {groups:[{id:1,name:"High Group",pct:[45,25,20,8,2]}], feeds:[
+    {id:1,name:"Corn Silage",dm:35,nel:0.74,cp:8.5,ndf:42,price:48},
+    {id:2,name:"Alfalfa Haylage",dm:40,nel:0.68,cp:20,ndf:44,price:180},
+    {id:3,name:"Dairy Pellet 18%",dm:89,nel:0.84,cp:19,ndf:22,price:340},
+    {id:4,name:"Distillers Wet",dm:32,nel:0.92,cp:30,ndf:38,price:135},
+    {id:5,name:"Cottonseed",dm:92,nel:0.98,cp:24,ndf:50,price:380}
+  ]};
 
-        // Load from localStorage with fallback
-        try {
-            const stored = localStorage.getItem('dairyData');
-            if (stored) data = JSON.parse(stored);
-        } catch (e) {
-            console.error('LocalStorage load error:', e);
-            alert('Data saving may not work if running from a local file (file://). Host on a server like GitHub Pages for full functionality!');
-        }
+  try { data = JSON.parse(localStorage.data||"{}"); if(!data.groups) data.groups=[]; } catch(e) {}
+  if(data.groups.length===0) data.groups.push({id:1,name:"Main Group",pct:new Array(data.feeds.length).fill(0)});
 
-        function saveData() {
-            try {
-                localStorage.setItem('dairyData', JSON.stringify(data));
-            } catch (e) {
-                console.error('LocalStorage save error:', e);
-            }
-        }
+  function save(){ localStorage.data = JSON.stringify(data); }
 
-        function openTab(tabName) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-            document.querySelector(`.tab[onclick="openTab('${tabName}')"]`).classList.add('active');
-            document.getElementById(tabName
+  function tab(x){
+    document.querySelectorAll('.tab button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
+    document.querySelector(`button[onclick="tab('${x}')"]`).classList.add('active');
+    document.getElementById(x).classList.add('active');
+    if(x==='calc') renderCalc();
+    if(x==='groups') renderGroups();
+    if(x==='feeds') renderFeeds();
+  }
+
+  function renderCalc(){
+    let html = ''; let sel = '';
+    data.groups.forEach(g=>{ sel += `<option value="${g.id}">${g.name}</option>`; });
+    document.getElementById('group').innerHTML = sel;
+    data.feeds.forEach((f,i)=>{
+      let val = data.groups.find(g=>g.id==document.getElementById('group').value).pct[i]||0;
+      html += `<div class="row"><span style="flex:1">${f.name}</span><input type="number" id="p${i}" value="${val}" min="0" max="100" step="1"><span>%</span></div>`;
+    });
+    document.getElementById('ingredients').innerHTML = html;
+  }
+
+  function calc(){
+    let gid = document.getElementById('group').value;
+    let g = data.groups.find(x=>x.id==gid);
+    data.feeds.forEach((f,i)=> g.pct[i] = parseFloat(document.getElementById(`p${i}`).value)||0);
+    save();
+
+    let cows = parseFloat(document.getElementById('cows').value)||0;
+    let milk = parseFloat(document.getElementById('milk').value)||0;
+    let totalPct = g.pct.reduce((a,b)=>a+b,0);
+    if(Math.abs(totalPct-100)>0.2){
+      document.getElementById('output').innerHTML = `<span class="warn">Percentages must = 100% (now ${totalPct.toFixed(1)}%)</span>`;
+      return;
+    }
+    let fcm = milk*(0.4 + 0.15*3.7);
+    let dmi = 0.372*fcm + 4.4;
+    let totalDMI = cows*dmi;
+
+    let out = `GROUP: ${g.name}\nCows: ${cows}  Milk: ${milk.toFixed(1)} lb\nDMI: ${dmi.toFixed(1)} lb/cow → ${totalDMI.toFixed(0)} lb total\n\nAS-FED (herd total)\n`;
+    let nel=0, cp=0, ndf=0, cost=0;
+
+    data.feeds.forEach((f,i)=>{
+      if(g.pct[i]>0){
+        let dmLb = totalDMI * (g.pct[i]/100);
+        let asfed = dmLb / (f.dm/100);
+        out += `${f.name}: ${asfed.toFixed(0)} lb\n`;
+        nel += dmLb * f.nel;
+        cp += dmLb * (f.cp/100);
+        ndf += dmLb * (f.ndf/100);
+        cost += asfed * (f.price/2000);
+      }
+    });
+
+    nel /= totalDMI; cp = cp/totalDMI*100; ndf = ndf/totalDMI*100;
+    out += `\nRATION\nNEₗ: ${nel.toFixed(3)} Mcal/lb ${nel<0.765?'<span class="warn">LOW</span>':''}\nCP: ${cp.toFixed(1)}% ${cp<16.5?'<span class="low">LOW</span>':''}\nNDF: ${ndf.toFixed(1)}% ${ndf>34?'<span class="high">HIGH</span>':''}\n\nCOST\n$${cost.toFixed(0)}/day  →  $${(cost/cows).toFixed(2)}/cow  →  $${(cost/(cows*milk/100)).toFixed(2)}/cwt`;
+    document.getElementById('output').innerHTML = out;
+  }
+
+  function renderGroups(){
+    let html = '';
+    data.groups.forEach(g=>{
+      html += `<div class="row"><input value="${g.name}" onchange="renameGroup(${g.id},this.value)"> <button class="del" onclick="delGroup(${g.id})">Delete</button></div>`;
+    });
+    document.getElementById('grouplist').innerHTML = html;
+  }
+
+  function addGroup(){
+    let name = document.getElementById('newgroup').value.trim() || "New Group";
+    data.groups.push({id:Date.now(), name:name, pct:new Array(data.feeds.length).fill(0)});
+    save(); document.getElementById('newgroup').value='';
+    renderGroups(); renderCalc();
+  }
+
+  function renameGroup(id,name){
+    data.groups.find(g=>g.id==id).name = name; save(); renderCalc();
+  }
+
+  function delGroup(id){
+    if(confirm('Delete this group?')){ data.groups = data.groups.filter(g=>g.id!=id); save(); renderGroups(); renderCalc(); }
+  }
+
+  function renderFeeds(){
+    let html = '';
+    data.feeds.forEach(f=>{
+      html += `<div style="background:#fff;padding:15px;margin:10px 0;border:1px solid #ddd;border-radius:8px">
+        <input value="${f.name}" onchange="editFeed(${f.id},'name',this.value)">
+        <div class="row"><input type="number" value="${f.dm}" step="0.1" onchange="editFeed(${f.id},'dm',this.value)"> DM%</div>
+        <div class="row"><input type="number" value="${f.nel}" step="0.001" onchange="editFeed(${f.id},'nel',this.value)"> NEₗ</div>
+        <div class="row"><input type="number" value="${f.cp}" step="0.1" onchange="editFeed(${f.id},'cp',this.value)"> CP%</div>
+        <div class="row"><input type="number" value="${f.ndf}" step="0.1" onchange="editFeed(${f.id},'ndf',this.value)"> NDF%</div>
+        <div class="row"><input type="number" value="${f.price}" step="1" onchange="editFeed(${f.id},'price',this.value)"> $/ton</div>
+        <button class="del" onclick="delFeed(${f.id})">Delete</button>
+      </div>`;
+    });
+    document.getElementById('feedlist').innerHTML = html;
+  }
+
+  function addFeed(){
+    let name = prompt("Ingredient name:");
+    if(name){
+      data.feeds.push({id:Date.now(),name:name,dm:88,nel:0.80,cp:18,ndf:25,price:300});
+      data.groups.forEach(g=>g.pct.push(0));
+      save(); renderFeeds(); renderCalc();
+    }
+  }
+
+  function editFeed(id,field,val){
+    let f = data.feeds.find(x=>x.id==id);
+    f[field] = (field==='name')?val:parseFloat(val)||0;
+    save(); renderFeeds();
+  }
+
+  function delFeed(id){
+    if(confirm('Delete ingredient? All groups will update.')){
+      let idx = data.feeds.findIndex(x=>x.id==id);
+      data.feeds.splice(idx,1);
+      data.groups.forEach(g=>g.pct.splice(idx,1));
+      save(); renderFeeds(); renderCalc();
+    }
+  }
+
+  document.getElementById('group').onchange = ()=>renderCalc();
+  renderCalc();
+</script>
+</body>
+</html>
