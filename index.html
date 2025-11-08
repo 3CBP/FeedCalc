@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barebones Dairy TMR App – FIXED</title>
+  <title>Dairy TMR Calculator</title>
   <style>
     body { background:#1565c0; color:white; font-family:-apple-system,sans-serif; margin:0; padding:20px; }
-    h1 { text-align:center; font-size:28px; margin-bottom:10px; }
+    header { text-align:center; padding:15px 0; background:#0d47a1; margin:-20px -20px 30px -20px; }
+    .logo { width:80px; height:80px; border-radius:50%; border:4px solid white; }
+    h1 { margin:10px 0 0; font-size:28px; }
     .tabs { display:flex; gap:10px; margin-bottom:20px; }
     .tab { flex:1; padding:15px; background:rgba(255,255,255,0.2); text-align:center; border-radius:8px; cursor:pointer; font-weight:bold; }
     .tab.active { background:white; color:#0d47a1; }
@@ -15,17 +17,23 @@
     input, select, button { width:100%; padding:12px; margin:8px 0; border:none; border-radius:8px; font-size:16px; }
     button { background:#ff9800; color:black; font-weight:bold; cursor:pointer; }
     .add { background:#4caf50; }
-    .del { background:#d32f2f; width:auto; padding:10px 15px; }
+    .del { background:#d32f2f; width:auto; padding:10px 15px; font-size:14px; }
     .row { display:flex; gap:10px; align-items:center; margin:10px 0; background:rgba(255,255,255,0.1); padding:10px; border-radius:8px; }
     .row span { flex:1; font-weight:bold; }
     .row input[type=number] { width:100px; text-align:center; }
-    .result { background:white; color:black; padding:25px; border-radius:12px; margin-top:20px; font-size:20px; line-height:1.6; }
-    .big { font-size:36px; color:#ff9800; font-weight:900; }
-    .ready { background:#d32f2f; color:white; padding:15px; font-size:24px; text-align:center; border-radius:10px; margin-bottom:20px; }
+    .result { background:white; color:black; padding:30px; border-radius:15px; margin-top:20px; font-size:22px; line-height:1.8; box-shadow:0 10px 30px rgba(0,0,0,0.4); }
+    .big { font-size:48px; color:#ff9800; font-weight:900; }
+    .ready { background:#d32f2f; color:white; padding:20px; font-size:32px; text-align:center; border-radius:12px; margin-bottom:20px; animation:glow 1.5s infinite; }
+    @keyframes glow { 0%,100% { box-shadow:0 0 20px #f00; } 50% { box-shadow:0 0 40px #f00; } }
   </style>
 </head>
 <body>
-  <h1>BAREBONES DAIRY TMR APP</h1>
+  <header>
+    <img src="logo.jpeg" alt="Your Farm Logo" class="logo" 
+         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iMzYiIGZpbGw9IiNmZmYiIHN0cm9rZT0iI2ZmOTgwMCIgc3Ryb2tlLXdpZHRoPSI4Ii8+CiI8L3N2Zz4K';">
+    <h1>Dairy TMR Calculator</h1>
+  </header>
+
   <div class="tabs">
     <div class="tab active" onclick="openTab('calc')">Calculator</div>
     <div class="tab" onclick="openTab('groups')">Groups</div>
@@ -36,29 +44,29 @@
     <select id="groupSelect"></select>
     <select id="rationSelect"></select>
     <input type="number" id="cows" placeholder="Number of cows" value="100">
-    <div style="display:flex; gap:20px; justify-content:center;">
+    <div style="display:flex; gap:20px; justify-content:center; margin:15px 0;">
       <label><input type="radio" name="mode" value="percow" checked> Per cow</label>
       <label><input type="radio" name="mode" value="total"> Total herd</label>
     </div>
     <div id="inputs"></div>
-    <button onclick="calculate()">GENERATE SHEET</button>
+    <button onclick="calculate()">GENERATE FEED SHEET</button>
+    <button onclick="window.print()">PRINT SHEET</button>
     <div id="result"></div>
   </div>
 
   <div id="groups" class="content">
-    <input type="text" id="newGroupName" placeholder="New group name">
+    <input type="text" id="newGroupName" placeholder="New group name (e.g. High Group)">
     <button class="add" onclick="addGroup()">+ ADD GROUP</button>
     <div id="groupList"></div>
   </div>
 
   <div id="feeds" class="content">
-    <input type="text" id="newFeedName" placeholder="New ingredient name">
+    <input type="text" id="newFeedName" placeholder="New ingredient (e.g. Corn Silage)">
     <button class="add" onclick="addFeed()">+ ADD INGREDIENT</button>
     <div id="feedList"></div>
   </div>
 
   <script>
-    // CLEAN DATA STRUCTURE
     let data = {
       feeds: [
         {id:1, name:"Corn Silage", dm:35},
@@ -70,14 +78,13 @@
       ]
     };
 
-    // Load from storage
     try {
-      const saved = localStorage.getItem('bareTMR');
+      const saved = localStorage.getItem('dairyTMRcalc');
       if (saved) data = JSON.parse(saved);
     } catch(e) {}
 
     function save() {
-      localStorage.setItem('bareTMR', JSON.stringify(data));
+      localStorage.setItem('dairyTMRcalc', JSON.stringify(data));
     }
 
     function openTab(tabName) {
@@ -92,11 +99,9 @@
     }
 
     function renderCalc() {
-      // Groups
       const groupSel = document.getElementById('groupSelect');
       groupSel.innerHTML = data.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
       
-      // Rations
       const gid = groupSel.value;
       const group = data.groups.find(g => g.id == gid);
       const rationSel = document.getElementById('rationSelect');
@@ -132,7 +137,7 @@
 
     function addGroup() {
       const name = document.getElementById('newGroupName').value.trim();
-      if (!name) { alert("Enter a group name"); return; }
+      if (!name) { alert("Please enter a group name"); return; }
       
       const newGroup = {
         id: Date.now(),
@@ -148,8 +153,7 @@
     }
 
     function renderGroups() {
-      const list = document.getElementById('groupList');
-      list.innerHTML = data.groups.map(g => `
+      document.getElementById('groupList').innerHTML = data.groups.map(g => `
         <div class="row">
           <input value="${g.name}" onchange="updateGroupName(${g.id}, this.value)">
           <button class="del" onclick="deleteGroup(${g.id})">Delete</button>
@@ -165,7 +169,7 @@
     }
 
     function deleteGroup(id) {
-      if (confirm("Delete this group?")) {
+      if (confirm("Delete this entire group and all its rations?")) {
         data.groups = data.groups.filter(g => g.id != id);
         save();
         renderGroups();
@@ -175,7 +179,7 @@
 
     function addFeed() {
       const name = document.getElementById('newFeedName').value.trim();
-      if (!name) { alert("Enter ingredient name"); return; }
+      if (!name) { alert("Please enter ingredient name"); return; }
       
       data.feeds.push({id: Date.now(), name, dm: 88});
       data.groups.forEach(g => g.rations.forEach(r => r.lbs.push(0)));
@@ -186,8 +190,7 @@
     }
 
     function renderFeeds() {
-      const list = document.getElementById('feedList');
-      list.innerHTML = data.feeds.map(f => `
+      document.getElementById('feedList').innerHTML = data.feeds.map(f => `
         <div class="row">
           <input value="${f.name}" onchange="updateFeedName(${f.id}, this.value)">
           <button class="del" onclick="deleteFeed(${f.id})">Delete</button>
@@ -222,7 +225,7 @@
       const group = data.groups.find(g => g.id == gid);
       const ration = group.rations.find(r => r.id == rid);
 
-      // Save inputs
+      // Save current values
       data.feeds.forEach((f, i) => {
         ration.lbs[i] = parseFloat(document.getElementById(`lb${i}`).value) || 0;
       });
@@ -237,17 +240,22 @@
         const lb = ration.lbs[i] * multiplier;
         if (lb > 0) {
           total += lb;
-          lines += `${f.name}: ${lb.toFixed(1)} lb\n`;
+          lines += `${f.name}\n${lb.toFixed(1)} lb\n\n`;
         }
       });
 
       document.getElementById('result').innerHTML = `
         <div class="ready">BATCH READY!</div>
-        <div style="background:white;color:black;padding:20px;border-radius:10px;">
-          <h2>${group.name} - ${ration.name}</h2>
-          <p><strong>${cows} cows × ${perCow ? 'per cow' : 'total'}</strong></p>
-          <pre>${lines}</pre>
-          <p class="big">TOTAL: ${total.toFixed(1)} lb</p>
+        <div class="result">
+          <h2 style="text-align:center;margin:0 0 20px;color:#0d47a1;">${group.name} - ${ration.name}</h2>
+          <div style="text-align:center;font-size:28px;margin:20px 0;">
+            <strong>${cows} COWS</strong><br>
+            ${perCow ? 'Per cow amounts' : 'Total herd batch'}
+          </div>
+          <pre style="font-size:26px;font-weight:bold;background:#f0f0f0;padding:20px;border-radius:10px;">${lines}</pre>
+          <div style="text-align:center;margin-top:30px;">
+            <span class="big">${total.toFixed(0)}</span> lb TOTAL
+          </div>
         </div>
       `;
     }
