@@ -1,1 +1,303 @@
- - copy this straight to index dot html. <!doctype html> <html> <head> <title>TMR Mixer</title> <style> body {font-family:sans-serif; background:#f5f5f5; margin:0; padding:10px;} .logo {max-width:80px; float:left; padding:10px;} h1 {font-size:28px; color:#006400; padding-left:90px; line-height:40px;} button {background:#006400; color:white; border:none; padding:10px 20px; margin:5px; border-radius:5px; font-size:18px;} input {width:70%; padding:10px; font-size:16px; margin-left:10px;} .ingredient {background:white; margin:10px 0; padding:15px; border-radius:10px;} .total {font-size:28px; font-weight:bold; color:#006400; padding:20px; text-align:center; margin:20px 0;} </style> </head> <body> <div class=logo><img src=logo.jpg /></div><h1>TMR Mixer</h1> <div> <button onclick=newIngredient()>New Ingredient</button> <button onclick=newRation()>New Ration</button> </div> <div id=ingredients> </div> <div id=totals></div> <script> let ingredients = JSON.parse(localStorage.getItem('tmr-ingredients')) || []; let rations = JSON.parse(localStorage.getItem('tmr-rations')) || []; let groups = JSON.parse(localStorage.getItem('tmr-groups')) || []; let total = 0; function newIngredient(){ let name = prompt('Ingredient name?'); let lbs = parseFloat(prompt('How many pounds?')); ingredients.push({name:name,lbs:lbs}); save(); render(); } function newRation(){ let name = prompt('Ration name?'); rations.push({name:name,ingredients:[]}); save(); alert('Ration saved. Add ingredients above.'); } function roundToFive(num){ return Math.round(num/5) 5; } function render(){ document.getElementById('ingredients').innerHTML = ''; ingredients.forEach((ing,i)=> { let div = document.createElement('div'); div.className = 'ingredient'; div.innerHTML = `<span>${ing.name}: ${ing{lbs} lbs</span> <button onclick=deleteIng(${i})> </button>`; document.getElementById('ingredients').appendChild(div); }); total = ingredients.reduce((a,c)=>a+c{lbs,0); total = roundToFive(total); document.getElementById('totals').innerHTML = `<div class=total>TOTAL MIX: ${total} lbs</div>`; } function deleteIng(i){ ingredients.splice(i,1); save(); render(); } function save(){ localStorage.setItem('tmr-ingredients',JSON.stringify(ingredients)); localStorage.setItem('tmr-rations',JSON.stringify(rations)); localStorage.setItem('tmr-groups',JSON.stringify(groups)); } render(); </script> </body> </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAIRY TMR PRO – FINAL FIXED v2.0</title>
+  <style>
+    :root{--blue:#1565c0;--dark:#0d47a1;--accent:#ff9800;--red:#d32f2f;--green:#4caf50}
+    body{font-family:-apple-system,sans-serif;background:var(--blue);color:white;margin:0;padding:0}
+    header{background:var(--dark);padding:25px;text-align:center;font-size:32px;font-weight:900}
+    .tabs{display:flex;background:#1976d2;position:sticky;top:0;z-index:100}
+    .tab{flex:1;padding:18px;text-align:center;cursor:pointer;font-weight:bold;font-size:18px}
+    .tab.active{background:white;color:var(--dark);border-bottom:6px solid var(--accent)}
+    .content{padding:20px;display:none}
+    .content.active{display:block}
+    input,select,button{width:100%;padding:16px;margin:12px 0;border:none;border-radius:10px;font-size:18px}
+    button{font-weight:900;cursor:pointer}
+    .calc{background:var(--accent);color:black}
+    .add{background:var(--green)}
+    .del{background:var(--red);font-size:16px;padding:12px;width:auto}
+    .print{background:#2196f3}
+    .dark{background:#333}
+    .row{display:flex;gap:15px;align-items:center;margin:15px 0;background:rgba(255,255,255,.12);padding:15px;border-radius:12px}
+    .row span{flex:1;font-weight:bold;font-size:18px}
+    .row input[type=number]{width:120px;text-align:center;font-size:18px}
+    .feedsheet{background:white;color:black;padding:35px;border-radius:18px;margin:35px 0;border:8px solid var(--accent);box-shadow:0 20px 50px rgba(0,0,0,.7)}
+    .feedsheet h2{margin:0 0 25px;color:var(--dark);font-size:42px;text-align:center}
+    .loadline{display:flex;justify-content:space-between;padding:18px 0;border-bottom:4px dashed #555;font-size:36px;font-weight:900}
+    .cumulative{font-size:40px;color:var(--green);text-align:right;margin:25px 0;font-weight:900}
+    .totals{background:#f0f0f0;padding:30px;border-radius:14px;margin-top:35px;font-size:32px;font-weight:bold}
+    .big{font-size:56px;color:var(--accent)}
+    .ready{background:#d32f2f;color:white;padding:25px;font-size:40px;text-align:center;border-radius:14px;animation:glow 1.5s infinite}
+    .qr{text-align:center;margin:30px 0}
+    @keyframes glow{0%,100%{box-shadow:0 0 20px #f00}50%{box-shadow:0 0 40px #f00}}
+    @media print{body{background:white;color:black}.no-print{display:none}.feedsheet{border:4px solid #000;box-shadow:none}}
+  </style>
+</head>
+<body>
+  <header>DAIRY TMR PRO v2.0</header>
+
+  <div class="tabs no-print">
+    <div class="tab active" data-tab="calc">Calculator</div>
+    <div class="tab" data-tab="groups">Groups</div>
+    <div class="tab" data-tab="feeds">Ingredients</div>
+    <div class="tab" data-tab="settings">Settings</div>
+  </div>
+
+  <div id="calc" class="content active">
+    <select id="groupSelect"></select>
+    <select id="rationSelect"></select>
+    <button class="add" onclick="addRation()">+ New Ration</button>
+    <input type="number" id="cows" placeholder="Number of cows" value="100">
+    <input type="number" id="batches" placeholder="Batches today" value="1">
+    <div style="display:flex;gap:30px;justify-content:center;margin:20px 0">
+      <label><input type="radio" name="mode" value="percow" checked> Per cow</label>
+      <label><10nput type="radio" name="mode" value="total"> Total herd</label>
+    </div>
+    <div id="inputs"></div>
+    <button class="calc" onclick="calc()">GENERATE FEED SHEET</button>
+    <button class="print" onclick="window.print()">PRINT SHEET</button>
+    <button class="dark" onclick="document.body.classList.toggle('dark')">DARK MODE</button>
+    <div id="result"></div>
+  </div>
+
+  <div id="groups" class="content">
+    <input type="text" id="newgroup" placeholder="New group name">
+    <button class="add" onclick="addGroup()">Add Group</button>
+    <div id="grouplist"></div>
+  </div>
+
+  <div id="feeds" class="content">
+    <button class="add" onclick="addFeed()">+ Add Ingredient</button>
+    <div style="margin:25px 0;font-size:18px">Drag ingredients to set loading order:</div>
+    <div id="feedlist" style="min-height:60px"></div>
+  </div>
+
+  <div id="settings" class="content">
+    <h3>Settings</h3>
+    <button class="del" onclick="if(confirm('ERASE EVERYTHING?')){localStorage.clear();location.reload()}">RESET ALL DATA</button>
+    <p style="font-size:24px;margin-top:30px">Batches mixed today: <span id="batchCount">0</span></p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode.js@1.0.0/lib/qrcode.min.js"></script>
+  <script>
+    // CLEAN START – NO BROKEN CODE
+    let data = {groups:[], feeds:[], settings:{batchCount:0}};
+    const defaults = {
+      feeds: [
+        {id:1,name:"Corn Silage",dm:35,nel:0.74,cp:8.5,ndf:42,price:48},
+        {id:2,name:"Alfalfa Haylage",dm:40,nel:0.68,cp:20,ndf:44,price:180},
+        {id:3,name:"Dairy Pellet",dm:89,nel:0.84,cp:19,ndf:22,price:340},
+        {id:4,name:"Distillers Wet",dm:32,nel:0.92,cp:30,ndf:38,price:135},
+        {id:5,name:"Cottonseed",dm:92,nel:0.98,cp:24,ndf:50,price:380}
+      ],
+      groups: [
+        {id:1,name:"High Group",rations:[{id:1,name:"Standard TMR",lbs:[24,12,8,6,2]}]},
+        {id:2,name:"Fresh Cows",rations:[{id:2,name:"Fresh Pen",lbs:[18,15,10,8,3]}]}
+      ]
+    };
+
+    try {data = JSON.parse(localStorage.getItem('dairyTMRv2') || JSON.stringify(defaults))} 
+    catch(e) {data = defaults}
+    
+    function save(){localStorage.setItem('dairyTMRv2', JSON.stringify(data))}
+
+    // TABS – FIXED WITH DATA ATTRIBUTE
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+        if(tab.dataset.tab==='calc') renderCalc();
+        if(tab.dataset.tab==='groups') renderGroups();
+        if(tab.dataset.tab==='feeds') renderFeeds();
+        if(tab.dataset.tab==='settings') document.getElementById('batchCount').innerText = data.settings.batchCount;
+      });
+    });
+
+    // CALC TAB
+    function renderCalc(){
+      document.getElementById('groupSelect').innerHTML = data.groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+      updateRationSelect();
+      updateInputs();
+    }
+    function updateRationSelect(){
+      const gid = document.getElementById('groupSelect').value;
+      const group = data.groups.find(g=>g.id==gid);
+      document.getElementById('rationSelect').innerHTML = group.rations.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
+      updateInputs();
+    }
+    function updateInputs(){
+      const gid = document.getElementById('groupSelect').value;
+      const rid = document.getElementById('rationSelect').value;
+      const ration = data.groups.find(g=>g.id==gid).rations.find(r=>r.id==rid);
+      let html = '';
+      data.feeds.forEach((f,i) => {
+        html += `<div class="row">
+          <span>${f.name}</span>
+          <input type="number" id="lb${i}" value="${ration.lbs[i]||0}" step="0.1">
+          <span>lb</span>
+        </div>`;
+      });
+      document.getElementById('inputs').innerHTML = html;
+    }
+
+    function addRation(){
+      const name = prompt("Ration name:");
+      if(!name) return;
+      const gid = document.getElementById('groupSelect').value;
+      const group = data.groups.find(g=>g.id==gid);
+      group.rations.push({id:Date.now(), name, lbs:new Array(data.feeds.length).fill(0)});
+      save();
+      updateRationSelect();
+    }
+
+    function calc(){
+      const gid = document.getElementById('groupSelect').value;
+      const rid = document.getElementById('rationSelect').value;
+      const cows = parseFloat(document.getElementById('cows').value) || 1;
+      const batches = parseFloat(document.getElementById('batches').value) || 1;
+      const perCow = document.querySelector('input[name="mode"]:checked').value === 'percow';
+      const group = data.groups.find(g=>g.id==gid);
+      const ration = group.rations.find(r=>r.id==rid);
+
+      // Save inputs
+      data.feeds.forEach((f,i) => { ration.lbs[i] = parseFloat(document.getElementById(`lb${i}`).value) || 0; });
+      save();
+
+      // Increment batch counter
+      data.settings.batchCount++;
+      save();
+      document.getElementById('batchCount').innerText = data.settings.batchCount;
+
+      // Calculations
+      let totalAsFed = 0, dmTotal = 0, nelW = 0, cpW = 0, ndfW = 0, costW = 0, cumulative = 0;
+      let loadLines = '';
+
+      const multiplier = perCow ? 1 : cows;
+      const sorted = data.feeds.map((f,i) => ({f, i, lb: ration.lbs[i] * multiplier * batches}))
+        .filter(x => x.lb > 0);
+
+      sorted.forEach(item => {
+        const lb = item.lb;
+        cumulative += lb;
+        const dmLb = lb * (item.f.dm/100);
+        loadLines += `<div class="loadline">
+          <div><strong>${item.f.name}</strong></div>
+          <div><span class="big">${lb.toFixed(0)}</span> lb</div>
+        </div>
+        <div class="cumulative">CUMULATIVE: ${cumulative.toFixed(0)} lb</div>`;
+
+        dmTotal += dmLb;
+        nelW += dmLb * item.f.nel;
+        cpW += dmLb * (item.f.cp/100);
+        ndfW += dmLb * (item.f.ndf/100);
+        costW += lb * (item.f.price/2000);
+      });
+
+      const nel = nelW / dmTotal;
+      const cp = (cpW / dmTotal) * 100;
+      const ndf = (ndfW / dmTotal) * 100;
+      const dmi = dmTotal / (cows * batches);
+
+      const qrDiv = document.createElement('div');
+      new QRCode(qrDiv, {text: location.href, width: 220, height: 220});
+
+      document.getElementById('result').innerHTML = `
+        <div class="ready">BATCH #${data.settings.batchCount} READY!</div>
+        <div class="feedsheet">
+          <h2>${group.name} – ${ration.name}</h2>
+          <div style="text-align:center;font-size:34px;margin:20px 0">
+            ${perCow ? 'PER COW' : 'TOTAL HERD'} × ${batches} BATCH${batches>1?'ES':''}<br>
+            ${cows * batches} COWS • DM: ${dmi.toFixed(1)} lb/cow
+          </div>
+          ${loadLines}
+          <div class="totals">
+            <div>TOTAL BATCH: <span class="big">${cumulative.toFixed(0)}</span> lb as-fed</div>
+            <div>NEₗ ${nel.toFixed(3)} • CP ${cp.toFixed(1)}% • NDF ${ndf.toFixed(1)}%</div>
+            <div>COST $<span class="big">${costW.toFixed(0)}</span> total (${(costW/(cows*batches)).toFixed(2)}/cow)</div>
+          </div>
+          <div class="qr">${qrDiv.innerHTML}</div>
+        </div>`;
+    }
+
+    // GROUPS TAB
+    function renderGroups(){
+      let html = '';
+      data.groups.forEach(g => {
+        html += `<div style="margin:25px 0;background:rgba(255,255,255,.1);padding:20px;border-radius:14px">
+          <div class="row">
+            <input value="${g.name}" onchange="renameGroup(${g.id},this.value)">
+            <button class="del" onclick="delGroup(${g.id})">Delete Group</button>
+          </div>
+          ${g.rations.map(r => `
+            <div class="row" style="margin-left:30px;background:rgba(255,255,255,.05)">
+              <input value="${r.name}" onchange="renameRation(${g.id},${r.id},this.value)">
+              <button class="del" onclick="delRation(${g.id},${r.id})">Delete</button>
+            </div>`).join('')}
+        </div>`;
+      });
+      document.getElementById('grouplist').innerHTML = html;
+    }
+    function renameGroup(id,v){data.groups.find(g=>g.id==id).name=v;save();renderCalc()}
+    function renameRation(gid,rid,v){data.groups.find(g=>g.id==gid).rations.find(r=>r.id==rid).name=v;save();renderCalc()}
+    function delGroup(id){if(confirm('Delete entire group?')){data.groups=data.groups.filter(g=>g.id!=id);save();renderGroups();renderCalc()}}
+    function delRation(gid,rid){if(confirm('Delete ration?')){data.groups.find(g=>g.id==gid).rations=data.groups.find(g=>g.id==gid).rations.filter(r=>r.id!=rid);save();renderGroups();renderCalc()}}
+    function addGroup(){
+      const name = prompt("Group name:") || "New Group";
+      data.groups.push({id:Date.now(), name, rations:[]});
+      save(); renderGroups(); renderCalc();
+    }
+
+    // INGREDIENTS TAB
+    function renderFeeds(){
+      const list = document.getElementById('feedlist');
+      list.innerHTML = data.feeds.map(f => `
+        <div class="row" data-id="${f.id}" style="cursor:move">
+          <input value="${f.name}" onchange="edit(${f.id},'name',this.value)" style="font-weight:bold;font-size:20px">
+          <input type="number" value="${f.dm}" step="0.1" onchange="edit(${f.id},'dm',this.value)"> DM%
+          <input type="number" value="${f.nel}" step="0.001" onchange="edit(${f.id},'nel',this.value)"> NEₗ
+          <input type="number" value="${f.cp}" step="0.1" onchange="edit(${f.id},'cp',this.value)"> CP%
+          <input type="number" value="${f.ndf}" step="0.1" onchange="edit(${f.id},'ndf',this.value)"> NDF%
+          <input type="number" value="${f.price}" step="1" onchange="edit(${f.id},'price',this.value)"> $/ton
+          <button class="del" onclick="delFeed(${f.id})">Delete</button>
+        </div>`).join('');
+      new Sortable(list, {animation:150, onEnd:()=>{data.feeds=Array.from(list.children).map(el=>data.feeds.find(f=>f.id==el.dataset.id));save();renderCalc()}});
+    }
+    function edit(id,fld,val){
+      const f = data.feeds.find(x=>x.id==id);
+      f[fld] = fld==='name'?val:parseFloat(val)||0;
+      save();
+    }
+    function addFeed(){
+      const name = prompt("Ingredient name:");
+      if(name){
+        data.feeds.push({id:Date.now(),name,dm:88,nel:0.80,cp:18,ndf:25,price:300});
+        data.groups.forEach(g=>g.rations.forEach(r=>r.lbs.push(0)));
+        save(); renderFeeds(); renderCalc();
+      }
+    }
+    function delFeed(id){
+      if(confirm('Delete from ALL rations?')){
+        const i = data.feeds.findIndex(x=>x.id==id);
+        data.feeds.splice(i,1);
+        data.groups.forEach(g=>g.rations.forEach(r=>r.lbs.splice(i,1)));
+        save(); renderFeeds(); renderCalc();
+      }
+    }
+
+    // EVENT LISTENERS
+    document.getElementById('groupSelect').onchange = () => {updateRationSelect(); updateInputs();}
+    document.getElementById('rationSelect').onchange = updateInputs;
+    document.querySelectorAll('input[name="mode"]').forEach(r => r.onchange = updateInputs);
+
+    // INITIAL LOAD
+    renderCalc();
+    renderGroups();
+    renderFeeds();
+  </script>
+</body>
+</html>
