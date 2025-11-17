@@ -1,22 +1,13 @@
 {
   "name": "Dairy TMR Calculator",
   "short_name": "TMR Calc",
-  "description": "Fast dairy ration calculator for loaders",
+  "description": "Total herd batch calculator",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#1565c0",
   "theme_color": "#1565c0",
-  "orientation": "portrait-primary",
   "icons": [
-    {
-      "src": "logo.jpeg",
-      "sizes": "192x192",
-      "type": "image/jpeg"
-    },
-    {
-      "src": "logo.jpeg",
-      "sizes": "512x512",
-      "type": "image/jpeg"
-    }
+    {"src": "logo.jpeg", "sizes": "192x192", "type": "image/jpeg"},
+    {"src": "logo.jpeg", "sizes": "512x512", "type": "image/jpeg"}
   ]
 }
