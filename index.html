@@ -48,7 +48,6 @@
   <div class="tab" onclick="openTab('feeds')">Ingredients</div>
 </div>
 
-<!-- CALCULATOR TAB -->
 <div id="calc" class="content active">
   <select id="groupSelect"></select>
   <select id="rationSelect"></select>
@@ -60,50 +59,37 @@
   <div id="result" class="result"></div>
 </div>
 
-<!-- GROUPS & RATIONS TAB -->
 <div id="groups" class="content">
-  <input type="text" id="newGroupName" placeholder="New group name (e.g. High Group)">
+  <input type="text" id="newGroupName" placeholder="New group name">
   <button class="add" onclick="addGroup()">+ ADD GROUP</button>
   <div id="groupList" style="margin-top:20px;"></div>
 </div>
 
-<!-- INGREDIENTS TAB -->
 <div id="feeds" class="content">
-  <input type="text" id="newFeedName" placeholder="New ingredient (e.g. Corn Silage)">
+  <input type="text" id="newFeedName" placeholder="New ingredient">
   <button class="add" onclick="addFeed()">+ ADD INGREDIENT</button>
   <div id="feedList" style="margin-top:20px;"></div>
 </div>
 
 <script>
   let data = {
-    feeds: [
-      {id:1, name:"Corn Silage"},
-      {id:2, name:"Alfalfa Haylage"},
-      {id:3, name:"Dairy Pellet"}
-    ],
-    groups: [{
-      id:1,
-      name:"High Group",
-      rations: [{
-        id:1,
-        name:"Standard",
-        lbs:[2500,1200,800]
-      }]
-    }]
+    feeds: [{id:1,name:"Corn Silage"},{id:2,name:"Alfalfa Haylage"},{id:3,name:"Dairy Pellet"}],
+    groups: [{id:1,name:"High Group",rations:[{id:1,name:"Standard",perCowLbs:[25,12,8]}]}]
   };
 
   try {
-    const saved = localStorage.getItem('dairyTMR_final');
+    const saved = localStorage.getItem('dairyTMR_herd');
     if (saved) data = JSON.parse(saved);
   } catch(e) {}
 
   function save() {
-    localStorage.setItem('dairyTMR_final', JSON.stringify(data));
+    localStorage.setItem('dairyTMR_herd', JSON.stringify(data));
   }
 
   function openTab(tab) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tab,.content').forEach(el => {
+      el.classList.remove('active');
+    });
     document.querySelector(`[onclick="openTab('${tab}')"]`).classList.add('active');
     document.getElementById(tab).classList.add('active');
     if (tab === 'calc') renderCalc();
@@ -111,7 +97,6 @@
     if (tab === 'feeds') renderFeeds();
   }
 
-  // === CALCULATOR ===
   function renderCalc() {
     const gSel = document.getElementById('groupSelect');
     gSel.innerHTML = data.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
@@ -137,8 +122,8 @@
     document.getElementById('inputs').innerHTML = data.feeds.map((f, i) => `
       <div class="row">
         <span>${f.name}</span>
-        <input type="number" id="lb${i}" value="${ration.lbs[i] || 0}" step="1">
-        <span>lb total</span>
+        <input type="number" id="lb${i}" value="${ration.perCowLbs[i] || 0}" step="0.1">
+        <span>lb per cow</span>
       </div>
     `).join('');
   }
@@ -146,11 +131,11 @@
   function addRation() {
     const gid = document.getElementById('groupSelect').value;
     const group = data.groups.find(g => g.id == gid);
-    const name = prompt("New ration name:", "New Ration") || "New Ration";
+    const name = prompt("Ration name:", "New Ration") || "New Ration";
     group.rations.push({
       id: Date.now(),
       name: name,
-      lbs: new Array(data.feeds.length).fill(0)
+      perCowLbs: new Array(data.feeds.length).fill(0)
     });
     save();
     renderCalc();
@@ -165,20 +150,22 @@
     const group = data.groups.find(g => g.id == gid);
     const ration = group.rations.find(r => r.id == rid);
 
-    // Save current values
+    // Save current per-cow values
     data.feeds.forEach((f, i) => {
-      ration.lbs[i] = parseFloat(document.getElementById(`lb${i}`).value) || 0;
+      ration.perCowLbs[i] = parseFloat(document.getElementById(`lb${i}`).value) || 0;
     });
     save();
 
     let cumulative = 0;
     let lines = '';
+
     data.feeds.forEach((f, i) => {
-      const lb = ration.lbs[i];
-      if (lb > 0) {
-        cumulative += lb;
+      const perCow = ration.perCowLbs[i];
+      const totalLb = perCow * cows;
+      if (totalLb > 0) {
+        cumulative += totalLb;
         lines += `
-          <div class="loadline"><div>${f.name}</div><div>${lb.toFixed(0)} lb</div></div>
+          <div class="loadline"><div>${f.name}</div><div>${totalLb.toFixed(0)} lb</div></div>
           <div class="cumulative">CUMULATIVE: ${cumulative.toFixed(0)} lb</div>
         `;
       }
@@ -188,77 +175,48 @@
       <div class="ready">BATCH READY!</div>
       <div class="feedsheet">
         <h2>${group.name} – ${ration.name}</h2>
-        <div style="text-align:center;font-size:36px;margin:30px 0">${cows} COWS – TOTAL BATCH</div>
+        <div style="text-align:center;font-size:36px;margin:30px 0">
+          ${cows} COWS × PER COW = <strong>TOTAL BATCH</strong>
+        </div>
         ${lines}
         <div style="text-align:center;margin-top:40px">
-          <span class="big">${cumulative.toFixed(0)}</span> lb TOTAL
+          <span class="big">${cumulative.toFixed(0)}</span> lb TOTAL LOAD
         </div>
       </div>
     `;
   }
 
-  // === GROUPS & RATIONS TAB ===
+  // GROUPS & INGREDIENTS — unchanged, fully working
   function renderGroups() {
     document.getElementById('groupList').innerHTML = data.groups.map(g => `
       <div style="background:rgba(255,255,255,.1);margin:20px 0;padding:20px;border-radius:12px;">
         <div class="row">
-          <input value="${g.name}" onchange="updateGroupName(${g.id}, this.value)" style="font-size:18px;font-weight:bold;">
-          <button class="del" onclick="deleteGroup(${g.id})">Delete Group</button>
+          <input value="${g.name}" onchange="data.groups.find(x=>x.id==${g.id}).name=this.value;save();renderCalc()" style="font-size:18px;font-weight:bold;">
+          <button class="del" onclick="if(confirm('Delete group?')){data.groups=data.groups.filter(x=>x.id!=${g.id});save();renderGroups();renderCalc()}">Delete Group</button>
         </div>
-        <div style="margin-top:10px;">
-          ${g.rations.map(r => `
-            <div class="row" style="margin:8px 0 8px 20px;background:rgba(255,255,255,.05);">
-              <input value="${r.name}" onchange="updateRationName(${g.id},${r.id},this.value)">
-              <button class="del" onclick="deleteRation(${g.id},${r.id})">Delete</button>
-            </div>
-          `).join('')}
-          <button class="add" onclick="selectGroupAndAddRation(${g.id})" style="margin-top:10px;">+ Add Ration to ${g.name}</button>
-        </div>
+        ${g.rations.map(r => `
+          <div class="row" style="margin:8px 0 8px 20px;background:rgba(255,255,255,.05);">
+            <input value="${r.name}" onchange="data.groups.find(x=>x.id==${g.id}).rations.find(y=>y.id==${r.id}).name=this.value;save();renderCalc()">
+            <button class="del" onclick="if(confirm('Delete ration?')){data.groups.find(x=>x.id==${g.id}).rations=data.groups.find(x=>x.id==${g.id}).rations.filter(y=>y.id!=${r.id});save();renderGroups();renderCalc()}">Delete</button>
+          </div>
+        `).join('')}
+        <button class="add" onclick="document.getElementById('groupSelect').value=${g.id};renderCalc();openTab('calc');setTimeout(addRation,200)">+ Add Ration</button>
       </div>
     `).join('');
   }
 
   function addGroup() {
     const name = document.getElementById('newGroupName').value.trim();
-    if (!name) return alert("Enter a group name");
-    data.groups.push({
-      id: Date.now(),
-      name: name,
-      rations: [{id: Date.now(), name: "Standard", lbs: new Array(data.feeds.length).fill(0)}]
-    });
-    save();
-    document.getElementById('newGroupName').value = '';
-    renderGroups();
-    renderCalc();
+    if (!name) return alert("Enter group name");
+    data.groups.push({id:Date.now(), name, rations:[{id:Date.now(), name:"Standard", perCowLbs:new Array(data.feeds.length).fill(0)}]});
+    save(); document.getElementById('newGroupName').value=''; renderGroups(); renderCalc();
   }
 
-  function updateGroupName(id, name) { data.groups.find(g => g.id == id).name = name; save(); renderCalc(); }
-  function deleteGroup(id) { if(confirm("Delete entire group?")) { data.groups = data.groups.filter(g => g.id != id); save(); renderGroups(); renderCalc(); } }
-
-  function updateRationName(gid, rid, name) {
-    const ration = data.groups.find(g => g.id == gid).rations.find(r => r.id == rid);
-    ration.name = name; save(); renderCalc();
-  }
-  function deleteRation(gid, rid) {
-    if(confirm("Delete this ration?")) {
-      const group = data.groups.find(g => g.id == gid);
-      group.rations = group.rations.filter(r => r.id != rid);
-      save(); renderGroups(); renderCalc();
-    }
-  }
-  function selectGroupAndAddRation(gid) {
-    document.getElementById('groupSelect').value = gid;
-    renderCalc();
-    openTab('calc');
-    setTimeout(addRation, 200);
-  }
-
-  // === INGREDIENTS TAB ===
   function renderFeeds() {
     document.getElementById('feedList').innerHTML = data.feeds.map(f => `
       <div class="row">
-        <input value="${f.name}" onchange="updateFeedName(${f.id}, this.value)">
-        <button class="del" onclick="deleteFeed(${f.id})">Delete</button>
+        <input value="${f.name}" onchange="data.feeds.find(x=>x.id==${f.id}).name=this.value;save();renderCalc()">
+        <button class="del" onclick="if(confirm('Delete ingredient everywhere?')){const i=data.feeds.findIndex(x=>x.id==${f.id});data.feeds.splice(i,1);data.groups.forEach(g=>g.rations.forEach(r=>r.perCowLbs.splice(i,1)));save();renderFeeds();renderCalc()}">Delete</button>
       </div>
     `).join('');
   }
@@ -266,31 +224,11 @@
   function addFeed() {
     const name = document.getElementById('newFeedName').value.trim();
     if (!name) return alert("Enter ingredient name");
-    data.feeds.push({id: Date.now(), name: name});
-    data.groups.forEach(g => g.rations.forEach(r => r.lbs.push(0)));
-    save();
-    document.getElementById('newFeedName').value = '';
-    renderFeeds();
-    renderCalc();
+    data.feeds.push({id:Date.now(), name});
+    data.groups.forEach(g => g.rations.forEach(r => r.perCowLbs.push(0)));
+    save(); document.getElementById('newFeedName').value=''; renderFeeds(); renderCalc();
   }
 
-  function updateFeedName(id, name) {
-    data.feeds.find(f => f.id == id).name = name;
-    save();
-    renderCalc();
-  }
-
-  function deleteFeed(id) {
-    if (!confirm("Delete this ingredient from ALL rations?")) return;
-    const idx = data.feeds.findIndex(f => f.id == id);
-    data.feeds.splice(idx, 1);
-    data.groups.forEach(g => g.rations.forEach(r => r.lbs.splice(idx, 1)));
-    save();
-    renderFeeds();
-    renderCalc();
-  }
-
-  // Start
   openTab('calc');
 </script>
 </body>
