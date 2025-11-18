@@ -3,70 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Install Dairy TMR Calculator</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="logo.jpeg">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#1565c0">
+  <title>Dairy TMR Calculator</title>
   <style>
-    body{background:#1565c0;color:#fff;font-family:-apple-system,sans-serif;margin:0;padding:20px;text-align:center;}
-    .logo{width:120px;height:120px;border-radius:50%;border:6px solid #fff;margin:40px auto 20px;}
-    h1{font-size:32px;margin:20px 0;}
-    p{font-size:20px;line-height:1.5;}
-    .btn{background:#ff9800;color:#000;font-size:24px;font-weight:bold;padding:20px;border-radius:15px;margin:40px auto;display:block;max-width:300px;box-shadow:0 10px 30px rgba(0,0,0,.4);}
-    .steps{background:rgba(255,255,255,.15);padding:20px;border-radius:15px;margin:30px 0;font-size:18px;}
-    .ios,.android{display:none;}
-    @media screen and (max-width:800px){
-      .ios{display:block;} .android{display:none;}
-      .ios + .android{display:none;}
-    }
-    @media screen and (min-width:801px){
-      .android{display:block;}
-    }
+    body{font-family:-apple-system,system-ui,sans-serif;background:#1565c0;color:white;margin:0;padding:20px;text-align:center;}
+    .container{max-width:500px;margin:0 auto;background:rgba(255,255,255,.1);border-radius:20px;padding:30px;}
+    h1{font-size:38px;margin:20px 0;}
+    .logo{width:120px;height:120px;border-radius:50%;border:6px solid white;margin:20px 0;}
+    button{background:#ff9800;color:black;font-weight:bold;padding:18px 40px;font-size:22px;border:none;border-radius:15px;margin:20px;cursor:pointer;}
+    .video{margin:40px 0;border-radius:15px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.5);}
+    .news{background:rgba(255,255,255,.15);padding:20px;margin:30px 0;border-radius:15px;line-height:1.6;}
+    footer{margin-top:50px;font-size:14px;opacity:0.8;}
   </style>
 </head>
 <body>
-  <img src="logo.jpeg" class="logo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNjAiIGN5PSI2MCIgcj0iNTYiIGZpbGw9IiNmZmYiIHN0cm9rZT0iI2ZmOTgwMCIgc3Ryb2tlLXdpZHRoPSIxMiIvPjwvc3ZnPg=='">
-  <h1>Dairy TMR Calculator</h1>
-  <p>Your fast, accurate TMR loading app</p>
+  <div class="container">
+    <img src="logo.jpeg" class="logo" alt="Logo" onerror="this.style.display='none'">
+    <h1>Dairy TMR Calculator</h1>
+    <p style="font-size:20px;">Tap below to open the app</p>
+    
+    <a href="app.html">
+      <button>OPEN THE APP</button>
+    </a>
 
-  <div class="steps ios">
-    <strong>How to install on iPhone/iPad:</strong><br><br>
-    1. Tap the Share button below<br>
-    2. Scroll down → “Add to Home Screen”<br>
-    3. Tap “Add”<br><br>
-    The app will appear on your home screen like a real app!
+    <div class="video">
+      <iframe width="100%" height="315" src="https://www.loom.com/embed/9f3d8e1c7a5b4f2a9d1e6f8b2c7d9e1a" 
+              frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    </div>
+
+    <div class="news">
+      <h2>News & Updates</h2>
+      <p><strong>November 18, 2025</strong><br>
+         New button: <strong>“Backup My Data”</strong> – now you can save all your rations with one tap!</p>
+      
+      <p><strong>October 2025</strong><br>
+         Added case-sensitive logins and full backup/restore.</p>
+      
+      <p><strong>Always remember:</strong> You must log in every time you open the app – this keeps your farm’s data secure.</p>
+    </div>
+
+    <footer>
+      Questions? Call [Your Name] at [Your Phone]<br>
+      © 2025 – All rations stay on your phone only
+    </footer>
   </div>
-
-  <div class="steps android">
-    <strong>How to install on Android:</strong><br><br>
-    1. Tap the three dots menu (top-right)<br>
-    2. Choose “Add to Home screen” or “Install app”<br><br>
-    Done! It will open full-screen with no browser bar.
-  </div>
-
-  <a href="app.html" class="btn" id="launchBtn" style="display:none;">
-    LAUNCH THE APP
-  </a>
-
-  <p><strong>Install the shortcut first — then tap the button above!</strong></p>
-
-  <script>
-    // Detect if already installed (PWA mode) → show launch button immediately
-    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-      document.getElementById('launchBtn').style.display = 'block';
-      document.querySelector('p:last-of-type').style.display = 'none';
-    }
-
-    // iOS Safari detection + prompt to install
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isInstalled = window.navigator.standalone === true;
-
-    if (isIOS && !isInstalled) {
-      setTimeout(() => {
-        alert("Tap the Share button → 'Add to Home Screen' to install the app!");
-      }, 2000);
-    }
-  </script>
 </body>
 </html>
