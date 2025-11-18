@@ -34,7 +34,6 @@
     @keyframes glow{0%,100%{box-shadow:0 0 30px #f00;}50%{box-shadow:0 0 60px #f00;}}
     @media print{.no-print{display:none}body{background:#fff;color:#000}.feedsheet{border:4px solid #000;}}
 
-    /* Simple login screen */
     #login{position:fixed;top:0;left:0;width:100%;height:100%;background:#0d47a1;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;}
     #login input{width:80%;max-width:320px;padding:16px;margin:12px;font-size:20px;border-radius:12px;text-align:center;}
     #login button{padding:16px 40px;font-size:20px;background:#ff9800;border:none;border-radius:12px;}
@@ -43,7 +42,7 @@
 </head>
 <body>
 
-<!-- SIMPLE USERNAME + PASSWORD SCREEN -->
+<!-- SIMPLE LOGIN -->
 <div id="login">
   <h2>Dairy TMR Calculator</h2>
   <input type="text" id="user" placeholder="Username" autocomplete="off">
@@ -52,7 +51,6 @@
   <p id="error">Wrong username or password</p>
 </div>
 
-<!-- Rest of your app (unchanged) -->
 <header>
   <img src="logo.jpeg" class="logo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iMzYiIGZpbGw9IiNmZmYiIHN0cm9rZT0iI2ZmOTgwMCIgc3Ryb2tlLXdpZHRoPSI4Ii8+CiI8L3N2Zz4K';">
   <h1>Dairy TMR Calculator</h1>
@@ -88,17 +86,17 @@
 </div>
 
 <script>
-// ==================== ADD UNLIMITED USERNAMES & PASSWORDS HERE ====================
+// ==================== ADD / REMOVE USERNAMES & PASSWORDS HERE ====================
 const users = [
   {user:"john",    pass:"john123"},
   {user:"mike",    pass:"mike456"},
   {user:"sarah",   pass:"sarah789"},
-  {user:"loader1", pass:"load2025"},
-  // ←←← Add as many as you want – one line per person
+  {user:"loader",  pass:"load2025"}
+  // ← add or delete lines here anytime
 ];
 
 function checkLogin() {
-  const u = document.getElementById('user').value.trim();
+  const u = document.getElementById('user').value.trim().toLowerCase();
   const p = document.getElementById('pass').value;
   const ok = users.some(x => x.user===u && x.pass===p);
   if (ok) {
@@ -111,32 +109,26 @@ function checkLogin() {
   }
 }
 
-// Skip login if already logged in this browser
+// Skip login screen if already logged in
 if (localStorage.getItem('loggedIn')) {
   document.getElementById('login').style.display='none';
 }
 
-// ==================== REST OF YOUR FULLY WORKING APP (unchanged) ====================
-let data = { /* same data object as before */ };
-
-try {
-  const saved = localStorage.getItem('dairyTMR_simple');
-  if (saved) data = JSON.parse(saved);
-  data.groups.forEach(g => { if (!g.lastCowCount) g.lastCowCount = 100; });
-} catch(e) {}
-
-function save() { localStorage.setItem('dairyTMR_simple', JSON.stringify(data)); }
-
-// All the same functions from the last 100% working version:
-// openTab, renderCalc, renderInputs, addRation, calculate,
-// renderGroups, addGroup, renderFeeds, addFeed
-
-// (I’m pasting the exact working code below – no changes needed)
-
+// ==================== MAIN APP DATA & FUNCTIONS ====================
 let data = {
   feeds: [{id:1,name:"Corn Silage"},{id:2,name:"Alfalfa Haylage"},{id:3,name:"Dairy Pellet"}],
   groups: [{id:1,name:"High Group",lastCowCount:100,rations:[{id:1,name:"Standard",perCowLbs:[25,12,8]}]}]
 };
+
+try {
+  const saved = localStorage.getItem('dairyTMR_login_fixed');
+  if (saved) data = JSON.parse(saved);
+  data.groups.forEach(g => { if (!g.lastCowCount) g.lastCowCount = 100; });
+} catch(e) {}
+
+function save() {
+  localStorage.setItem('dairyTMR_login_fixed', JSON.stringify(data));
+}
 
 function openTab(t){
   document.querySelectorAll('.tab,.content').forEach(e=>e.classList.remove('active'));
@@ -253,7 +245,7 @@ function addFeed(){
   save();document.getElementById('newFeedName').value='';renderFeeds();renderCalc();
 }
 
-// Start
+// Start the app
 if(localStorage.getItem('loggedIn')) renderCalc();
 </script>
 </body>
