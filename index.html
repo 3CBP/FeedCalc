@@ -10,13 +10,12 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#1565c0">
   <style>
-    body{font-family:-apple-system,system-ui,sans-serif;background:#1565c0;color:white;margin:0;padding:20px;text-align:center;}
+    body{font-family:-apple-system,sans-serif;background:#1565c0;color:white;margin:0;padding:20px;text-align:center;}
     .container{max-width:500px;margin:0 auto;background:rgba(255,255,255,.1);border-radius:20px;padding:30px;}
     .logo{width:120px;height:120px;border-radius:50%;border:6px solid white;margin:20px 0;}
-    button{background:#ff9800;color:black;font-weight:bold;padding:18px 40px;font-size:22px;border:none;border-radius:15px;margin:15px;cursor:pointer;width:90%;}
-    .installBtn{background:#4caf50 !important;font-size:26px;padding:22px;}
+    button{background:#ff9800;color:black;font-weight:bold;padding:20px 40px;font-size:24px;border:none;border-radius:15px;margin:15px;cursor:pointer;width:90%;}
+   ily .installBtn{background:#4caf50 !important;font-size:26px;padding:22px;}
     .steps{background:rgba(255,255,255,.15);padding:20px;border-radius:15px;margin:30px 0;font-size:18px;line-height:1.6;}
-    .news{background:rgba(255,255,255,.15);padding:20px;margin:30px 0;border-radius:15px;line-height:1.6;}
     footer{margin-top:50px;font-size:14px;opacity:0.8;}
   </style>
 </head>
@@ -25,47 +24,51 @@
     <img src="logo.jpeg" class="logo" alt="Logo" onerror="this.style.display='none'">
     <h1>Dairy TMR Calculator</h1>
 
-    <!-- This button only appears AFTER the app is installed -->
-    <a href="app.html" id="openBtn" style="display:none;text-decoration:none;">
-      <button style="background:#ff9800;font-size:26px;padding:22px;">
+    <!-- OPEN BUTTON – only visible AFTER install -->
+    <a href="app.html" id="openBtn" style="display:none; text-decoration:none;">
+      <button style="background:#ff9800; font-size:26px; padding:22px;">
         OPEN THE APP NOW
       </button>
     </a>
 
-    <!-- This button only appears BEFORE the app is installed -->
+    <!-- INSTALL BUTTON – only visible BEFORE install -->
     <button onclick="installApp()" class="installBtn" id="installBtn">
       INSTALL TO HOME SCREEN
     </button>
 
     <div class="steps">
-      <h2>How to Install</h2>
-      <p><strong>iPhone:</strong> Tap green button → Share → “Add to Home Screen”</p>
-      <p><strong>Android:</strong> Tap green button → “Install”</p>
-      <p>After installing, come back here — the green button disappears and you’ll only see “Open the App Now”.</p>
+      <h2>How to Install (30 seconds)</h2>
+      <p><strong>iPhone:</strong> Tap green button → Share → Add to Home Screen</p>
+      <p><strong>Android:</strong> Tap green button → Install</p>
+      <p>After installing, the green button disappears automatically — even on this page!</p>
     </div>
 
     <div class="steps">
-      <h2>Backup Your Data</h2>
-      <p>Inside the app → tap <strong>“Backup My Data”</strong> → save the file safely.</p>
-    </div>
-
-    <div class="news">
-      <h2>Updates</h2>
-      <p><strong>November 18, 2025</strong><br>Smart install detection — “Open” button only appears after install</p>
+      <h2>Backup</h2>
+      <p>Inside the app → tap <strong>“Backup My Data”</strong></p>
     </div>
 
     <footer>Questions? Call [Your Name] at [Your Phone]</footer>
   </div>
 
   <script>
-    // Hide install button and show open button if running as installed PWA
-    if (window.matchMedia('(display-mode: standalone)').matches || 
-       window.navigator.standalone === true) {
-      document.getElementById('installBtn').style.display = 'none';
-      document.getElementById('openBtn').style.display = 'block';
+    // Check if already installed (standalone mode = from home screen)
+    function checkInstalled() {
+      const isInstalled = 
+        window.matchMedia('(display-mode: standalone)').matches || 
+        window.navigator.standalone === true ||
+        window.location.href.includes('?homescreen');   // fallback
+
+      if (isInstalled) {
+        document.getElementById('installBtn').style.display = 'none';
+        document.getElementById('openBtn').style.display = 'block';
+      }
     }
 
-    // Android install prompt
+    // Run on load
+    checkInstalled();
+
+    // Android: catch the install prompt
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
@@ -75,19 +78,29 @@
     function installApp() {
       if (deferredPrompt) {
         deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(() => {
+        deferredPrompt.userChoice.then(choice => {
+          if (choice.outcome === 'accepted') {
+            // Instantly hide install button even without refresh
+            document.getElementById('installBtn').style.display = 'none';
+            document.getElementById('openBtn').style.display = 'block';
+          }
           deferredPrompt = null;
         });
       } else if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-        alert("Tap the Share button below → then 'Add to Home Screen'");
+        alert("Tap the Share button below → then scroll down and tap 'Add to Home Screen'");
       }
     }
 
-    // Optional: also listen for when they actually finish installing
-    window.addEventListener('appinstalled', () => {
-      document.getElementById('installBtn').style.display = 'none';
-      document.getElementById('openBtn').style.display = 'block';
+    // iPhone: when they return from home screen, force refresh once to update buttons
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted || window.navigator.standalone) checkInstalled();
     });
+
+    // Final fallback: if they open from home screen icon, redirect straight to app.html
+    if (window.matchMedia('(display-mode: standalone)').matches || 
+        window.navigator.standalone === true) {
+      window.location.href = "app.html";
+    }
   </script>
 </body>
 </html>
