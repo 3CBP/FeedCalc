@@ -4,13 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dairy TMR Calculator</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="logo.jpeg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#1565c0">
+
   <style>
     body{font-family:-apple-system,system-ui,sans-serif;background:#1565c0;color:white;margin:0;padding:20px;text-align:center;}
     .container{max-width:500px;margin:0 auto;background:rgba(255,255,255,.1);border-radius:20px;padding:30px;}
-    h1{font-size:38px;margin:20px 0;}
     .logo{width:120px;height:120px;border-radius:50%;border:6px solid white;margin:20px 0;}
     button{background:#ff9800;color:black;font-weight:bold;padding:18px 40px;font-size:22px;border:none;border-radius:15px;margin:20px;cursor:pointer;}
-    .video{margin:40px 0;border-radius:15px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.5);}
+    .steps{background:rgba(255,255,255,.15);padding:20px;border-radius:15px;margin:30px 0;font-size:18px;line-height:1.6;text-align:left;}
+    .screenshot{max-width:100%;border-radius:12px;margin:15px 0;box-shadow:0 10px 30px rgba(0,0,0,.5);}
     .news{background:rgba(255,255,255,.15);padding:20px;margin:30px 0;border-radius:15px;line-height:1.6;}
     footer{margin-top:50px;font-size:14px;opacity:0.8;}
   </style>
@@ -19,32 +25,70 @@
   <div class="container">
     <img src="logo.jpeg" class="logo" alt="Logo" onerror="this.style.display='none'">
     <h1>Dairy TMR Calculator</h1>
-    <p style="font-size:20px;">Tap below to open the app</p>
-    
-    <a href="app.html">
-      <button>OPEN THE APP</button>
-    </a>
 
-    <div class="video">
-      <iframe width="100%" height="315" src="https://www.loom.com/embed/9f3d8e1c7a5b4f2a9d1e6f8b2c7d9e1a" 
-              frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    <!-- BIG INSTALL BUTTON (iPhone + Android) -->
+    <button onclick="installApp()" style="background:#4caf50;font-size:24px;padding:20px;">
+      INSTALL APP ON HOME SCREEN
+    </button>
+
+    <!-- FALLBACK FOR PEOPLE WHO ALREADY INSTALLED -->
+    <p style="font-size:18px;margin:20px 0;">Already installed?<br>
+    <a href="app.html" style="color:#ff9800;font-weight:bold;">→ Open the App Now</a></p>
+
+    <div class="steps">
+      <h2>How to Install (30 seconds)</h2>
+      <p><strong>iPhone/iPad:</strong> Tap the green button above → “Add to Home Screen”</p>
+      <p><strong>Android:</strong> Tap the green button above → “Install” or “Add to Home Screen”</p>
+      <p>After installing, the app works offline forever — no internet needed!</p>
+    </div>
+
+    <div class="steps">
+      <h2>How to Backup Your Data</h2>
+      <p>1. Open the app and log in<br>
+         2. Tap <strong>“Backup My Data”</strong><br>
+         3. File downloads instantly — save it!</p>
+      <p>To restore: Tap “Restore from Backup” → pick the file → done.</p>
     </div>
 
     <div class="news">
-      <h2>News & Updates</h2>
-      <p><strong>November 18, 2025</strong><br>
-         New button: <strong>“Backup My Data”</strong> – now you can save all your rations with one tap!</p>
-      
-      <p><strong>October 2025</strong><br>
-         Added case-sensitive logins and full backup/restore.</p>
-      
-      <p><strong>Always remember:</strong> You must log in every time you open the app – this keeps your farm’s data secure.</p>
+      <h2>Updates</h2>
+      <p><strong>November 18, 2025</strong><br>“Backup My Data” button added</p>
+      <p><strong>October 2025</strong><br>Case-sensitive logins + full backup/restore</p>
     </div>
 
     <footer>
       Questions? Call [Your Name] at [Your Phone]<br>
-      © 2025 – All rations stay on your phone only
+      © 2025 – Your data never leaves your phone
     </footer>
   </div>
+
+  <!-- MAGIC INSTALL SCRIPT – works on iPhone & Android -->
+  <script>
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+    });
+
+    function installApp() {
+      // Android Chrome / Samsung Internet
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(() => {
+          deferredPrompt = null;
+        });
+        return;
+      }
+
+      // iPhone Safari
+      if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+        alert("Tap the Share button below (square with arrow up) → then tap 'Add to Home Screen'");
+        return;
+      }
+
+      // Fallback
+      alert("To install: use your browser menu → 'Add to Home Screen' or 'Install App'");
+    }
+  </script>
 </body>
 </html>
