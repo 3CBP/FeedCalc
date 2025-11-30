@@ -47,10 +47,9 @@
 
 <div id="login" style="display:none;">
   <h2>Dairy TMR Calculator</h2>
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="pass" placeholder="Password">
+  <input type="email" id="email" placeholder="Email" autocomplete="off">
+  <input type="password" id="pass" placeholder="Password" autocomplete="off">
   <button onclick="login()">SIGN IN</button>
-  <button onclick="signup()" style="background:#4caf50;margin-top:10px;">CREATE ACCOUNT</button>
   <p id="error"></p>
 </div>
 
@@ -63,7 +62,7 @@
 </div>
 
 <header>
-  <img src="logo.jpeg" class="logo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iMzYiIGZpbGw9IiNmZmYiIHN0cm9rZT0iI2ZmOTgwMCIgc3Ryb2tlLXdpZHRoPSI4Ii8+CiI8L3N2Zz4K';">
+  <img src="logo.jpeg" class="logo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCI gcj0iMzYiIGZpbGw9IiNmZmYiIHN0cm9rZT0iI2ZmOTgwMCI gc3Ryb2tlLXdpZHRoPSI4Ii8+CiI8L3N2Zz4K';">
   <h1>Dairy TMR Calculator</h1>
 </header>
 
@@ -90,10 +89,10 @@
 </div>
 
 <script>
-// ==================== YOUR SUPABASE KEYS (already correct) ====================
+// ==================== YOUR SUPABASE KEYS ====================
 const SUPABASE_URL      = "https://wrgizzneqlhwwglhggbt.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZ2l6em5lcWxod3dnbGhnZ2J0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1MzE1NzQsImV4cCI6MjA4MDEwNzU3NH0.M2g7er3EK-To7nTYGiVoN8LC1roBG9fdgmjlS9j9qP8";
-// ===========================================================================
+// ===========================================================
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let data = { groups: [] };
@@ -131,13 +130,15 @@ async function loadUserData() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  const { data: row } = await supabase
+  const { data: row, error } = await supabase
     .from('customer_data')
     .select('data')
     .eq('user_id', user.id)
     .single();
 
-  data = row?.data || { groups: [{
+  if (error && error.code !== 'PGRST116') { showError("Error loading data"); return; }
+
+  data = row ? row.data : { groups: [{
     id: Date.now(), name: "High Group", lastCowCount: 100,
     rations: [{ id: Date.now(), name: "Standard", ingredients: [] }]
   }]};
@@ -163,7 +164,7 @@ supabase.auth.getSession().then(({ data: { session } }) => {
   }
 });
 
-// ==================== ALL YOUR APP CODE (exactly the same as before) ====================
+// ==================== APP LOGIC ====================
 function openTab(t) {
   document.querySelectorAll('.tab,.content').forEach(e => e.classList.remove('active'));
   document.querySelector(`[onclick="openTab('${t}')"]`).classList.add('active');
@@ -295,5 +296,8 @@ function restoreBackup(e) {
   r.onload = ev => { try { data = JSON.parse(ev.target.result); save(); alert("Restored!"); location.reload(); } catch { alert("Invalid file"); }};
   r.readAsText(file);
 }
+
+// Start – login is always shown
 </script>
+</body>
 </html>
