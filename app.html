@@ -38,7 +38,7 @@
     #error{color:#ff5252;margin-top:15px;display:none;}
     .backupBtns{margin:20px 0;text-align:center;}
     .backupBtns button{margin:10px;padding:14px 32px;font-size:18px;}
-    .logoutBtn{position:absolute;top:20px;right:20px;background:#d32f2f;padding:10px 15px;border-radius:8px;font-size:14px;}
+    .logoutBtn{position:fixed;top:20px;right:20px;background:#d32f2f;color:white;padding:10px 20px;border-radius:8px;font-size:16px;z-index:1000;box-shadow:0 4px 10px rgba(0,0,0,0.3);}
   </style>
 </head>
 <body>
@@ -47,8 +47,8 @@
 
 <div id="login" style="display:none;">
   <h2>Dairy TMR Calculator</h2>
-  <input type="email" id="email" placeholder="Email" autocomplete="off">
-  <input type="password" id="pass" placeholder="Password" autocomplete="off">
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="pass" placeholder="Password">
   <button onclick="login()">SIGN IN</button>
   <p id="error"></p>
 </div>
@@ -62,7 +62,7 @@
 </div>
 
 <header>
-  <img src="logo.jpeg" class="logo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCI gcj0iMzYiIGZpbGw9IiNmZmYiIHN0cm9rZT0iI2ZmOTgwMCI gc3Ryb2tlLXdpZHRoPSI4Ii8+CiI8L3N2Zz4K';">
+  <img src="logo.jpeg" class="logo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iMzYiIGZpbGw9IiNmZmYiIHN0cm9rZT0iI2ZmOTgwMCIgc3Ryb2tlLXdpZHRoPSI4Ii8+CiI8L3N2Zz4K';">
   <h1>Dairy TMR Calculator</h1>
 </header>
 
@@ -90,7 +90,7 @@
 
 <script>
 // ==================== YOUR SUPABASE KEYS ====================
-const SUPABASE_URL      = "https://wrgizzneqlhwwglhggbt.supabase.co";
+const SUPABASE_URL = "https://wrgizzneqlhwwglhggbt.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZ2l6em5lcWxod3dnbGhnZ2J0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1MzE1NzQsImV4cCI6MjA4MDEwNzU3NH0.M2g7er3EK-To7nTYGiVoN8LC1roBG9fdgmjlS9j9qP8";
 // ===========================================================
 
@@ -104,15 +104,6 @@ async function login() {
   });
   if (error) showError(error.message);
   else await loadUserData();
-}
-
-async function signup() {
-  const email = document.getElementById('email').value.trim();
-  const pass = document.getElementById('pass').value;
-  if (pass.length < 6) return showError("Password must be 6+ characters");
-  const { error } = await supabase.auth.signUp({ email, password: pass });
-  if (error) showError(error.message);
-  else alert("Check your email for confirmation link!");
 }
 
 function showError(msg) {
@@ -130,15 +121,13 @@ async function loadUserData() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  const { data: row, error } = await supabase
+  const { data: row } = await supabase
     .from('customer_data')
     .select('data')
     .eq('user_id', user.id)
     .single();
 
-  if (error && error.code !== 'PGRST116') { showError("Error loading data"); return; }
-
-  data = row ? row.data : { groups: [{
+  data = row?.data || { groups: [{
     id: Date.now(), name: "High Group", lastCowCount: 100,
     rations: [{ id: Date.now(), name: "Standard", ingredients: [] }]
   }]};
@@ -296,8 +285,6 @@ function restoreBackup(e) {
   r.onload = ev => { try { data = JSON.parse(ev.target.result); save(); alert("Restored!"); location.reload(); } catch { alert("Invalid file"); }};
   r.readAsText(file);
 }
-
-// Start – login is always shown
 </script>
 </body>
 </html>
