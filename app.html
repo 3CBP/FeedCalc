@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#1565c0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body{background:#1565c0;color:#fff;font-family:-apple-system,sans-serif;margin:0;padding:0;position:relative;min-height:100vh;padding-bottom:160px;box-sizing:border-box;}
+    body{background:#1565c0;color:#fff;font-family:-apple-system,sans-serif;margin:0;padding:0 0 180px 0;min-height:100vh;box-sizing:border-box;}
     header{text-align:center;padding:40px 20px;background:#0d47a1;}
     .logo{max-width:90px;max-height:90px;border-radius:50%;border:4px solid #fff;margin:0 auto;display:block;}
     h1{margin:15px 0;font-size:28px;}
@@ -36,7 +36,7 @@
     #login input{width:80%;max-width:340px;padding:16px;margin:12px;font-size:22px;border-radius:12px;text-align:center;}
     #login button{padding:18px 50px;font-size:22px;background:#ff9800;border:none;border-radius:12px;}
     #error{color:#ff5252;margin-top:15px;display:none;}
-    .backupPanel{position:fixed;bottom:0;left:0;width:100%;background:rgba(13,71,161,0.95);padding:20px;box-sizing:border-box;z-index:900;display:none;}
+    .backupPanel{margin:30px 20px;padding:20px;background:rgba(13,71,161,0.95);border-radius:15px;text-align:center;display:none;}
     .backupPanel button{margin:10px 0;padding:16px;font-size:18px;}
     .logoutBottom{background:#d32f2f !important;}
   </style>
@@ -51,14 +51,6 @@
   <input type="password" id="pass" placeholder="Password">
   <button onclick="login()">SIGN IN</button>
   <p id="error"></p>
-</div>
-
-<!-- BACKUP + LOG OUT PANEL – FIXED AT BOTTOM -->
-<div class="backupPanel no-print" id="backupPanel">
-  <button onclick="downloadBackup()">Backup My Data</button>
-  <button onclick="document.getElementById('restoreFile').click()">Restore from Backup</button>
-  <button class="logoutBottom" onclick="logout()">LOG OUT</button>
-  <input type="file" id="restoreFile" style="display:none" accept=".json" onchange="restoreBackup(event)">
 </div>
 
 <header>
@@ -86,6 +78,14 @@
   <input type="text" id="newGroupName" placeholder="New group name">
   <button class="add" onclick="addGroup()">+ ADD GROUP</button>
   <div id="groupList" style="margin-top:20px;"></div>
+</div>
+
+<!-- BACKUP + LOG OUT PANEL – ALWAYS VISIBLE AT BOTTOM OF PAGE -->
+<div class="backupPanel no-print" id="backupPanel">
+  <button onclick="downloadBackup()">Backup My Data</button>
+  <button onclick="document.getElementById('restoreFile').click()">Restore from Backup</button>
+  <button class="logoutBottom" onclick="logout()">LOG OUT</button>
+  <input type="file" id="restoreFile" style="display:none" accept=".json" onchange="restoreBackup(event)">
 </div>
 
 <script>
