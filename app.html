@@ -26,11 +26,12 @@
     .row{display:flex;gap:10px;align-items:center;margin:10px 0;background:rgba(255,255,255,.1);padding:12px;border-radius:8px;}
     .row input[type=number]{width:110px;text-align:center;}
     .result{margin-top:30px;}
-    .feedsheet{background:#fff;color:#000;padding:20px;margin:0;}
-    .loadline{display:flex;justify-content:space-between;font-size:32px;font-weight:900;padding:10px 0;border-bottom:2px dashed #000;}
-    .cumulative{font-size:28px;color:#000;text-align:right;margin:8px 0;font-weight:bold;}
-    .big{font-size:60px;color:#000;font-weight:900;}
-    .ready{background:#fff;color:#000;padding:15px;font-size:36px;text-align:center;font-weight:bold;border-bottom:4px solid #000;}
+    .feedsheet{background:#fff;color:#000;padding:40px;border-radius:20px;border:8px solid #ff9800;box-shadow:0 20px 40px rgba(0,0,0,.5);}
+    .loadline{display:flex;justify-content:space-between;font-size:38px;font-weight:900;padding:15px 0;border-bottom:3px dashed #666;}
+    .cumulative{font-size:42px;color:#4caf50;text-align:right;margin:20px 0;}
+    .big{font-size:70px;color:#ff9800;}
+    .ready{background:#d32f2f;color:#fff;padding:25px;font-size:40px;text-align:center;border-radius:15px;animation:glow 1.5s infinite;}
+    @keyframes glow{0%,100%{box-shadow:0 0 30px #f00;}50%{box-shadow:0 0 60px #f00;}}
     #login,#loading{position:fixed;top:0;left:0;width:100%;height:100%;background:#0d47a1;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;}
     #login input{width:80%;max-width:340px;padding:16px;margin:12px;font-size:22px;border-radius:12px;text-align:center;}
     #login button{padding:18px 50px;font-size:22px;background:#ff9800;border:none;border-radius:12px;}
@@ -39,33 +40,256 @@
     .backupPanel button{margin:10px 0;padding:16px;font-size:18px;}
     .logoutBottom{background:#d32f2f !important;}
     @media print {
-      @page { size: letter portrait; margin: 0.5in; }
-      body * { visibility: hidden; }
-      .feedsheet, .feedsheet * { visibility: visible; }
-      .feedsheet { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; border: none; box-shadow: none; }
-      .ready { font-size: 40px; padding: 20px 0; border-bottom: 6px double #000; }
-      h2 { font-size: 36px; margin: 20px 0; text-align: center; }
-      .loadline { font-size: 34px; padding: 12px 0; border-bottom: 3px dashed #000; }
-      .cumulative { font-size: 30px; margin: 10px 0; }
-      .big { font-size: 80px; margin: 30px 0; }
+      body, html {background:#fff;color:#000;margin:0;padding:0;}
+      .no-print, header, .tabs, #inputs, #cows, button, .backupPanel {display:none !important;}
+      .feedsheet {border:4px solid #000;box-shadow:none;margin:0;padding:20px;}
+      .ready {background:#fff;color:#000;padding:10px;font-size:30px;}
     }
   </style>
 </head>
 <body>
 
-<!-- (your login, backup panel, header, tabs, calc, groups – all the same as your current file) -->
+<div id="loading"><h2>Loading…</h2></div>
+
+<div id="login" style="display:none;">
+  <h2>Dairy TMR Calculator</h2>
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="pass" placeholder="Password">
+  <button onclick="login()">SIGN IN</button>
+  <p id="error"></p>
+</div>
+
+<header>
+  <img src="logo.jpeg" class="logo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iMzYiIGZpbGw9IiNmZmYiIHN0cm9rZT0iI2ZmOTgwMCIgc3Ryb2tlLXdpZHRoPSI4Ii8+CiI8L3N2Zz4K';">
+  <h1>Dairy TMR Calculator</h1>
+</header>
+
+<div class="tabs no-print">
+  <div class="tab active" onclick="openTab('calc')">Calculator</div>
+  <div class="tab" onclick="openTab('groups')">Groups & Rations</div>
+</div>
 
 <div id="calc" class="content active">
-  <!-- (your calculator UI – unchanged) -->
+  <select id="groupSelect" onchange="renderRationSelect()"></select>
+  <select id="rationSelect" onchange="renderInputs()"></select>
+  <button class="add" onclick="addIngredientToCurrentRation()">+ Add Ingredient to This Ration</button>
+  <input type="number" id="cows" placeholder="Number of cows" value="100">
+  <div id="inputs"></div>
   <button onclick="calculate()">GENERATE BATCH SHEET</button>
   <button onclick="window.print()">PRINT SHEET</button>
   <div id="result" class="result"></div>
 </div>
 
-<!-- (rest of your code – unchanged) -->
+<div id="groups" class="content">
+  <input type="text" id="newGroupName" placeholder="New group name">
+  <button class="add" onclick="addGroup()">+ ADD GROUP</button>
+  <div id="groupList" style="margin-top:20px;"></div>
+</div>
+
+<!-- BACKUP + LOG OUT PANEL – VISIBLE AT BOTTOM -->
+<div class="backupPanel no-print" id="backupPanel">
+  <button onclick="downloadBackup()">Backup My Data</button>
+  <button onclick="document.getElementById('restoreFile').click()">Restore from Backup</button>
+  <button class="logoutBottom" onclick="logout()">LOG OUT</button>
+  <input type="file" id="restoreFile" style="display:none" accept=".json" onchange="restoreBackup(event)">
+</div>
 
 <script>
-  // (your full Supabase and app logic – unchanged from the last working version)
+// ==================== YOUR SUPABASE KEYS ====================
+const SUPABASE_URL = "https://wrgizzneqlhwwglhggbt.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZ2l6em5lcWxod3dnbGhnZ2J0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1MzE1NzQsImV4cCI6MjA4MDEwNzU3NH0.M2g7er3EK-To7nTYGiVoN8LC1roBG9fdgmjlS9j9qP8";
+// ===========================================================
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let data = { groups: [] };
+
+async function login() {
+  const { error } = await supabase.auth.signInWithPassword({
+    email: document.getElementById('email').value.trim(),
+    password: document.getElementById('pass').value
+  });
+  if (error) showError(error.message);
+  else await loadUserData();
+}
+
+function showError(msg) {
+  const e = document.getElementById('error');
+  e.textContent = msg; e.style.display = 'block';
+  setTimeout(() => e.style.display = 'none', 6000);
+}
+
+async function logout() {
+  await supabase.auth.signOut();
+  location.reload();
+}
+
+async function loadUserData() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { data: row } = await supabase
+    .from('customer_data')
+    .select('data')
+    .eq('user_id', user.id)
+    .single();
+
+  data = row?.data || { groups: [{
+    id: Date.now(), name: "High Group", lastCowCount: 100,
+    rations: [{ id: Date.now(), name: "Standard", ingredients: [] }]
+  }]};
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('backupPanel').style.display = 'block';
+  renderCalc();
+}
+
+async function save() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from('customer_data').upsert({ user_id: user.id, data });
+}
+
+supabase.auth.getSession().then(({ data: { session } }) => {
+  if (session) loadUserData();
+  else {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('login').style.display = 'flex';
+  }
+});
+
+// ==================== APP LOGIC ====================
+function openTab(t) {
+  document.querySelectorAll('.tab,.content').forEach(e => e.classList.remove('active'));
+  document.querySelector(`[onclick="openTab('${t}')"]`).classList.add('active');
+  document.getElementById(t).classList.add('active');
+  if (t === 'calc') renderCalc();
+  if (t === 'groups') renderGroups();
+}
+
+function renderCalc() {
+  const gSel = document.getElementById('groupSelect');
+  gSel.innerHTML = data.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+  renderRationSelect();
+}
+
+function renderRationSelect() {
+  const gid = document.getElementById('groupSelect').value;
+  const group = data.groups.find(g => g.id == gid);
+  const rSel = document.getElementById('rationSelect');
+  rSel.innerHTML = group.rations.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+  document.getElementById('cows').value = group.lastCowCount || 100;
+  renderInputs();
+}
+
+function renderInputs() {
+  const gid = document.getElementById('groupSelect').value;
+  const rid = document.getElementById('rationSelect').value;
+  const ration = data.groups.find(g => g.id == gid)?.rations.find(r => r.id == rid);
+  if (!ration) return;
+
+  document.getElementById('inputs').innerHTML = ration.ingredients.map(ing => `
+    <div class="row">
+      <input value="${ing.name}" onchange="updateName(${gid},${rid},${ing.id},this.value)">
+      <input type="number" value="${ing.lbsPerCow||0}" step="0.1" onchange="updateLbs(${gid},${rid},${ing.id},this.value)">
+      <button class="del" onclick="deleteIng(${gid},${rid},${ing.id})">Delete</button>
+    </div>
+  `).join('') || '<p style="text-align:center;">No ingredients yet — tap "+ Add Ingredient"</p>';
+}
+
+function addIngredientToCurrentRation() {
+  const gid = document.getElementById('groupSelect').value;
+  const rid = document.getElementById('rationSelect').value;
+  const name = prompt("Ingredient name:", "New Feed") || "New Feed";
+  const ration = data.groups.find(g => g.id == gid).rations.find(r => r.id == rid);
+  ration.ingredients.push({ id: Date.now(), name, lbsPerCow: 0 });
+  save(); renderInputs();
+}
+
+function updateName(gid, rid, iid, val) { data.groups.find(g=>g.id==gid).rations.find(r=>r.id==rid).ingredients.find(i=>i.id==iid).name = val; save(); }
+function updateLbs(gid, rid, iid, val) { data.groups.find(g=>g.id==gid).rations.find(r=>r.id==rid).ingredients.find(i=>i.id==iid).lbsPerCow = parseFloat(val)||0; save(); }
+function deleteIng(gid, rid, iid) {
+  if (!confirm("Delete this ingredient from this ration only?")) return;
+  const ration = data.groups.find(g=>g.id==gid).rations.find(r=>r.id==rid);
+  ration.ingredients = ration.ingredients.filter(i => i.id != iid);
+  save(); renderInputs();
+}
+
+function calculate() {
+  const gid = document.getElementById('groupSelect').value;
+  const rid = document.getElementById('rationSelect').value;
+  const cows = parseFloat(document.getElementById('cows').value) || 100;
+  const group = data.groups.find(g => g.id == gid);
+  const ration = group.rations.find(r => r.id == rid);
+  group.lastCowCount = cows; save();
+
+  let cum = 0, lines = '';
+  ration.ingredients.forEach(i => {
+    const tot = (i.lbsPerCow || 0) * cows;
+    if (tot > 0) { cum += tot;
+      lines += `<div class="loadline"><div>${i.name}</div><div>${tot.toFixed(0)} lb</div></div>
+                <div class="cumulative">CUMULATIVE: ${cum.toFixed(0)} lb</div>`;
+    }
+  });
+
+  document.getElementById('result').innerHTML = `
+    <div class="ready">BATCH READY!</div>
+    <div class="feedsheet">
+      <h2>${group.name} – ${ration.name}</h2>
+      <div style="text-align:center;font-size:36px;margin:30px 0">${cows} COWS – TOTAL BATCH</div>
+      ${lines}
+      <div style="text-align:center;margin-top:40px"><span class="big">${cum.toFixed(0)}</span> lb TOTAL</div>
+    </div>`;
+}
+
+function renderGroups() {
+  document.getElementById('groupList').innerHTML = data.groups.map(g => `
+    <div style="background:rgba(255,255,255,.1);margin:20px 0;padding:20px;border-radius:12px;">
+      <div class="row">
+        <input value="${g.name}" onchange="renameGroup(${g.id},this.value)" style="font-weight:bold;font-size:18px;">
+        <button class="del" onclick="deleteGroup(${g.id})">Delete Group</button>
+      </div>
+      ${g.rations.map(r => `
+        <div style="margin:15px 0;padding:15px;background:rgba(255,255,255,.05);border-radius:10px;">
+          <input value="${r.name}" onchange="renameRation(${g.id},${r.id},this.value)">
+          <button class="del" onclick="deleteRation(${g.id},${r.id})">Delete Ration</button>
+        </div>
+      `).join('')}
+      <button class="add" onclick="addRation(${g.id})">+ Add Ration</button>
+    </div>
+  `).join('');
+}
+
+function addGroup() {
+  const name = prompt("New group name:", "New Group") || "New Group";
+  data.groups.push({ id: Date.now(), name, lastCowCount: 100, rations: [{ id: Date.now(), name: "Standard", ingredients: [] }] });
+  save(); renderGroups(); renderCalc();
+}
+
+function addRation(gid) {
+  const name = prompt("Ration name:", "New Ration") || "New Ration";
+  data.groups.find(g => g.id == gid).rations.push({ id: Date.now(), name, ingredients: [] });
+  save(); renderGroups();
+}
+
+function renameGroup(id, val) { data.groups.find(g=>g.id==id).name = val; save(); renderCalc(); }
+function renameRation(gid, rid, val) { data.groups.find(g=>g.id==gid).rations.find(r=>r.id==rid).name = val; save(); }
+function deleteGroup(id) { if(confirm("Delete entire group?")) { data.groups = data.groups.filter(g=>g.id!=id); save(); renderGroups(); renderCalc(); }}
+function deleteRation(gid, rid) { if(confirm("Delete this ration?")) { const g = data.groups.find(g=>g.id==gid); g.rations = g.rations.filter(r=>r.id!=rid); save(); renderGroups(); }}
+
+function downloadBackup() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)], {type:'application/json'}));
+  a.download = `TMR-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+function restoreBackup(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => { try { data = JSON.parse(ev.target.result); save(); alert("Restored!"); location.reload(); } catch { alert("Invalid file"); }};
+  r.readAsText(file);
+}
 </script>
 </body>
 </html>
