@@ -10,13 +10,13 @@
   <meta name="theme-color" content="#1565c0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body{background:#1565c0;color:#fff;font-family:-apple-system,sans-serif;margin:0;padding:0;}
+    body{background:#1565c0;color:#fff;font-family:-apple-system,sans-serif;margin:0;padding:0;position:relative;min-height:100vh;padding-bottom:100px;}
     header{text-align:center;padding:20px;background:#0d47a1;}
     .logo{width:80px;height:80px;border-radius:50%;border:4px solid #fff;}
     h1{margin:10px 0;font-size:28px;}
     .topbar{position:fixed;top:0;left:0;width:100%;background:#0d47a1;padding:15px 20px;box-sizing:border-box;display:flex;justify-content:flex-end;align-items:center;z-index:1000;}
     .topbar .logoutBtn{background:#d32f2f;color:white;padding:10px 20px;border-radius:8px;font-size:16px;box-shadow:0 4px 10px rgba(0,0,0,0.3);}
-    .tabs{display:flex;gap:10px;margin:80px 20px 20px;} /* extra margin for top bar */
+    .tabs{display:flex;gap:10px;margin:80px 20px 20px;}
     .tab{flex:1;padding:15px;background:rgba(255,255,255,.2);text-align:center;border-radius:8px;cursor:pointer;font-weight:bold;}
     .tab.active{background:#fff;color:#0d47a1;}
     .content{display:none;padding:10px;}
@@ -38,8 +38,9 @@
     #login input{width:80%;max-width:340px;padding:16px;margin:12px;font-size:22px;border-radius:12px;text-align:center;}
     #login button{padding:18px 50px;font-size:22px;background:#ff9800;border:none;border-radius:12px;}
     #error{color:#ff5252;margin-top:15px;display:none;}
-    .backupBtns{margin:30px 20px;padding:20px;background:rgba(255,255,255,.1);border-radius:15px;text-align:center;}
-    .backupBtns button{margin:10px;padding:14px 32px;font-size:18px;width:90%;max-width:400px;}
+    /* FIXED BOTTOM BACKUP PANEL – ALWAYS VISIBLE */
+    .backupPanel{position:fixed;bottom:0;left:0;width:100%;background:rgba(13,71,161,0.95);padding:15px;box-sizing:border-box;z-index:900;display:none;}
+    .backupPanel button{margin:10px 0;padding:14px;font-size:18px;}
   </style>
 </head>
 <body>
@@ -54,13 +55,13 @@
   <p id="error"></p>
 </div>
 
-<!-- LOGOUT BUTTON – CLEAN TOP BAR -->
+<!-- LOGOUT BUTTON – CLEAN TOP RIGHT -->
 <div class="topbar no-print" id="topbar" style="display:none;">
   <button class="logoutBtn" onclick="logout()">LOG OUT</button>
 </div>
 
-<!-- BACKUP BUTTONS – CLEAR AND VISIBLE -->
-<div class="backupBtns no-print" id="backupPanel" style="display:none;">
+<!-- BACKUP PANEL – FIXED AT BOTTOM, ALWAYS FULLY VISIBLE -->
+<div class="backupPanel no-print" id="backupPanel">
   <button onclick="downloadBackup()">Backup My Data</button>
   <button onclick="document.getElementById('restoreFile').click()">Restore from Backup</button>
   <input type="file" id="restoreFile" style="display:none" accept=".json" onchange="restoreBackup(event)">
