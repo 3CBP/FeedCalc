@@ -8,7 +8,6 @@
   <link rel="apple-touch-icon" href="logo.jpeg">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#1565c0">
-  <!-- Working global Supabase CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <style>
     body{background:#1565c0;color:#fff;font-family:-apple-system,sans-serif;margin:0;padding:0;position:relative;min-height:100vh;padding-bottom:200px;box-sizing:border-box;}
@@ -40,7 +39,22 @@
     .backupPanel{position:fixed;bottom:0;left:0;width:100%;background:rgba(13,71,161,0.95);padding:20px;box-sizing:border-box;text-align:center;z-index:1000;display:none;}
     .backupPanel button{margin:10px auto;display:block;width:90%;max-width:400px;padding:16px;font-size:18px;}
     .logoutBottom{background:#d32f2f !important;color:#fff;}
-    .main-content{padding-bottom:220px;} /* space for fixed bottom panel */
+    .main-content{padding-bottom:220px;}
+
+    /* SAFE SIMPLE BOLD PRINT SHEET */
+    @media print {
+      body * {visibility:hidden;}
+      #result, #result * {visibility:visible;}
+      #result {position:absolute;left:0;top:0;width:100%;background:#fff;color:#000;padding:20px;box-sizing:border-box;}
+      .ready {display:none;}
+      .feedsheet {border:none;box-shadow:none;background:#fff;padding:0;}
+      .loadline {font-size:36pt;font-weight:bold;border-bottom:3pt solid #000;padding:10pt 0;}
+      .cumulative {font-size:32pt;font-weight:bold;color:#000;text-align:right;margin:15pt 0;}
+      h2 {font-size:36pt;font-weight:bold;text-align:center;margin:30pt 0;}
+      [style="text-align:center;font-size:36px;margin:30px 0"] {font-size:30pt;font-weight:bold;margin:20pt 0;}
+      [style="text-align:center;margin-top:40px"] span.big {font-size:60pt;font-weight:bold;}
+      @page {margin:0.5in;}
+    }
   </style>
 </head>
 <body>
