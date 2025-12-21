@@ -8,7 +8,8 @@
   <link rel="apple-touch-icon" href="logo.jpeg">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#1565c0">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Fixed Supabase CDN – this loads the actual JS file -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <style>
     body{background:#1565c0;color:#fff;font-family:-apple-system,sans-serif;margin:0;padding:0;}
     header{text-align:center;padding:20px;background:#0d47a1;margin:0;}
@@ -40,7 +41,7 @@
     #error{color:#ff5252;margin-top:15px;display:none;}
     .backupBtns{margin:20px 0;text-align:center;}
     .backupBtns button{margin:10px;padding:14px 32px;font-size:18px;}
-    .main-content{padding-top:70px;} /* space for fixed top bar */
+    .main-content{padding-top:70px;}
   </style>
 </head>
 <body>
@@ -55,9 +56,8 @@
   <p id="error"></p>
 </div>
 
-<!-- CLEAN TOP BAR WITH LOGOUT -->
 <div class="topbar no-print" id="topbar" style="display:none;">
-  <div></div> <!-- left empty for spacing -->
+  <div></div>
   <button class="logoutBtn" onclick="logout()">LOG OUT</button>
 </div>
 
@@ -160,7 +160,6 @@ supabase.auth.getSession().then(({ data: { session } }) => {
   }
 });
 
-// ==================== APP LOGIC (same as before) ====================
 function openTab(t) {
   document.querySelectorAll('.tab,.content').forEach(e => e.classList.remove('active'));
   document.querySelector(`[onclick="openTab('${t}')"]`).classList.add('active');
@@ -248,8 +247,7 @@ function renderGroups() {
   document.getElementById('groupList').innerHTML = data.groups.map(g => `
     <div style="background:rgba(255,255,255,.1);margin:20px 0;padding:20px;border-radius:12px;">
       <div class="row">
-        <input value="${g.name}" onchange="renameGroup(${ 
-g.id},this.value)" style="font-weight:bold;font-size:18px;">
+        <input value="${g.name}" onchange="renameGroup(${g.id},this.value)" style="font-weight:bold;font-size:18px;">
         <button class="del" onclick="deleteGroup(${g.id})">Delete Group</button>
       </div>
       ${g.rations.map(r => `
