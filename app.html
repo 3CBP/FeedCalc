@@ -56,13 +56,13 @@
 
 <div class="topbar no-print" id="topbar" style="display:none;">
   <div></div>
-  <button class="logoutBtn" onclick="logout()">LOG OUT</button>
+  <button class="logoutBtn" id="logoutBtn">LOG OUT</button>
 </div>
 
 <div class="backupBtns no-print" id="backupPanel" style="display:none;">
-  <button onclick="downloadBackup()">Backup My Data</button>
-  <button onclick="document.getElementById('restoreFile').click()">Restore from Backup</button>
-  <input type="file" id="restoreFile" style="display:none" accept=".json" onchange="restoreBackup(event)">
+  <button id="backupBtn">Backup My Data</button>
+  <button id="restoreBtn">Restore from Backup</button>
+  <input type="file" id="restoreFile" style="display:none" accept=".json">
 </div>
 
 <div class="main-content">
@@ -72,24 +72,24 @@
   </header>
 
   <div class="tabs no-print">
-    <div class="tab active" onclick="openTab('calc')">Calculator</div>
-    <div class="tab" onclick="openTab('groups')">Groups & Rations</div>
+    <div class="tab active" id="tabCalc">Calculator</div>
+    <div class="tab" id="tabGroups">Groups & Rations</div>
   </div>
 
   <div id="calc" class="content active">
-    <select id="groupSelect" onchange="renderRationSelect()"></select>
-    <select id="rationSelect" onchange="renderInputs()"></select>
-    <button class="add" onclick="addIngredientToCurrentRation()">+ Add Ingredient to This Ration</button>
+    <select id="groupSelect"></select>
+    <select id="rationSelect"></select>
+    <button class="add" id="addIngredientBtn">+ Add Ingredient to This Ration</button>
     <input type="number" id="cows" placeholder="Number of cows" value="100">
     <div id="inputs"></div>
-    <button onclick="calculate()">GENERATE BATCH SHEET</button>
-    <button onclick="window.print()">PRINT SHEET</button>
+    <button id="calculateBtn">GENERATE BATCH SHEET</button>
+    <button id="printBtn">PRINT SHEET</button>
     <div id="result" class="result"></div>
   </div>
 
   <div id="groups" class="content">
     <input type="text" id="newGroupName" placeholder="New group name">
-    <button class="add" onclick="addGroup()">+ ADD GROUP</button>
+    <button class="add" id="addGroupBtn">+ ADD GROUP</button>
     <div id="groupList" style="margin-top:20px;"></div>
   </div>
 </div>
@@ -103,15 +103,18 @@
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let data = { groups: [] };
 
-  // Fix for inline onclick in modules: use addEventListener for buttons that had inline onclick
-  document.querySelectorAll('button[onclick]').forEach(btn => {
-    const onclick = btn.getAttribute('onclick');
-    btn.removeAttribute('onclick');
-    btn.addEventListener('click', new Function(onclick));
-  });
-
-  // Special for login button
+  // Attach all button events (required in modules)
   document.getElementById('loginBtn').addEventListener('click', login);
+  document.getElementById('logoutBtn').addEventListener('click', logout);
+  document.getElementById('backupBtn').addEventListener('click', downloadBackup);
+  document.getElementById('restoreBtn').addEventListener('click', () => document.getElementById('restoreFile').click());
+  document.getElementById('restoreFile').addEventListener('change', restoreBackup);
+  document.getElementById('tabCalc').addEventListener('click', () => openTab('calc'));
+  document.getElementById('tabGroups').addEventListener('click', () => openTab('groups'));
+  document.getElementById('addIngredientBtn').addEventListener('click', addIngredientToCurrentRation);
+  document.getElementById('calculateBtn').addEventListener('click', calculate);
+  document.getElementById('printBtn').addEventListener('click', () => window.print());
+  document.getElementById('addGroupBtn').addEventListener('click', addGroup);
 
   async function login() {
     const { error } = await supabase.auth.signInWithPassword({
@@ -171,7 +174,8 @@
 
   function openTab(t) {
     document.querySelectorAll('.tab,.content').forEach(e => e.classList.remove('active'));
-    document.querySelector(`[onclick="openTab('${t}')"]`).classList.add('active');
+    document.getElementById('tabCalc').classList.toggle('active', t === 'calc');
+    document.getElementById('tabGroups').classList.toggle('active', t === 'groups');
     document.getElementById(t).classList.add('active');
     if (t === 'calc') renderCalc();
     if (t === 'groups') renderGroups();
