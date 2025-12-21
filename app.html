@@ -41,19 +41,20 @@
     .logoutBottom{background:#d32f2f !important;color:#fff;}
     .main-content{padding-bottom:220px;}
 
-    /* SAFE SIMPLE BOLD PRINT SHEET */
+    /* CLEAN ONE-PAGE PRINT SHEET - BOLD BLACK TEXT ONLY */
     @media print {
       body * {visibility:hidden;}
       #result, #result * {visibility:visible;}
-      #result {position:absolute;left:0;top:0;width:100%;background:#fff;color:#000;padding:20px;box-sizing:border-box;}
-      .ready {display:none;}
-      .feedsheet {border:none;box-shadow:none;background:#fff;padding:0;}
-      .loadline {font-size:36pt;font-weight:bold;border-bottom:3pt solid #000;padding:10pt 0;}
-      .cumulative {font-size:32pt;font-weight:bold;color:#000;text-align:right;margin:15pt 0;}
-      h2 {font-size:36pt;font-weight:bold;text-align:center;margin:30pt 0;}
-      [style="text-align:center;font-size:36px;margin:30px 0"] {font-size:30pt;font-weight:bold;margin:20pt 0;}
-      [style="text-align:center;margin-top:40px"] span.big {font-size:60pt;font-weight:bold;}
-      @page {margin:0.5in;}
+      #result {position:absolute;left:0;top:0;width:100%;background:#fff;color:#000;padding:20px;box-sizing:border-box;font-family:sans-serif;}
+      .ready, .big {display:none;}
+      .feedsheet {background:#fff;padding:0;border:none;box-shadow:none;}
+      h2 {font-size:28pt;font-weight:bold;text-align:center;margin:20pt 0;}
+      [style="text-align:center;font-size:36px;margin:30px 0"] {font-size:24pt;font-weight:bold;text-align:center;margin:15pt 0;}
+      .loadline {font-size:28pt;font-weight:bold;justify-content:space-between;padding:8pt 0;border-bottom:none;}
+      .loadline > div:first-child {font-weight:bold;}
+      .cumulative {font-size:24pt;font-weight:bold;text-align:right;margin:12pt 0;}
+      [style="text-align:center;margin-top:40px"] {font-size:40pt;font-weight:bold;text-align:center;margin:30pt 0;}
+      @page {margin:0.5in; size: portrait;}
     }
   </style>
 </head>
