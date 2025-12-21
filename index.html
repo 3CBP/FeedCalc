@@ -10,66 +10,69 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#1565c0">
   <style>
-    body{font-family:-apple-system,sans-serif;background:#1565c0;color:white;margin:0;padding:20px;text-align:center;}
-    .container{max-width:500px;margin:0 auto;background:rgba(255,255,255,.1);border-radius:20px;padding:30px;}
-    .logo{width:120px;height:120px;border-radius:50%;border:6px solid white;margin:20px 0;}
-    button{background:#ff9800;color:black;font-weight:bold;padding:20px 40px;font-size:24px;border:none;border-radius:15px;margin:15px;cursor:pointer;width:90%;}
-   ily .installBtn{background:#4caf50 !important;font-size:26px;padding:22px;}
-    .steps{background:rgba(255,255,255,.15);padding:20px;border-radius:15px;margin:30px 0;font-size:18px;line-height:1.6;}
-    footer{margin-top:50px;font-size:14px;opacity:0.8;}
+    body{font-family:-apple-system,sans-serif;background:#1565c0;color:white;margin:0;padding:20px;text-align:center;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+    .container{max-width:500px;margin:0 auto;background:rgba(255,255,255,.1);border-radius:20px;padding:40px 30px;width:100%;box-sizing:border-box;}
+    .logo{width:140px;height:140px;border-radius:50%;border:8px solid white;margin:20px auto;display:block;box-shadow:0 10px 30px rgba(0,0,0,0.4);}
+    h1{font-size:32px;margin:20px 0 30px;font-weight:bold;}
+    button{background:#ff9800;color:black;font-weight:bold;padding:20px;font-size:26px;border:none;border-radius:15px;margin:20px auto;cursor:pointer;width:95%;max-width:400px;display:block;box-shadow:0 8px 20px rgba(0,0,0,0.3);}
+    .installBtn{background:#4caf50 !important;color:white !important;}
+    .openBtn{background:#ff9800 !important;font-size:28px !important;padding:24px !important;}
+    .steps{background:rgba(255,255,255,.15);padding:25px;border-radius:15px;margin:30px 0;font-size:18px;line-height:1.7;}
+    .steps h2{font-size:22px;margin:0 0 15px 0;}
+    footer{margin-top:40px;font-size:15px;opacity:0.9;line-height:1.6;}
   </style>
 </head>
 <body>
+
   <div class="container">
-    <img src="logo.jpeg" class="logo" alt="Logo" onerror="this.style.display='none'">
+    <img src="logo.jpeg" class="logo" alt="Farm Logo" onerror="this.style.display='none'">
     <h1>Dairy TMR Calculator</h1>
 
-    <!-- OPEN BUTTON – only visible AFTER install -->
-    <a href="app.html" id="openBtn" style="display:none; text-decoration:none;">
-      <button style="background:#ff9800; font-size:26px; padding:22px;">
-        OPEN THE APP NOW
-      </button>
+    <!-- OPEN BUTTON – shown when installed / from home screen -->
+    <a href="app.html" id="openLink" style="text-decoration:none;display:none;">
+      <button class="openBtn">OPEN THE APP NOW</button>
     </a>
 
-    <!-- INSTALL BUTTON – only visible BEFORE install -->
+    <!-- INSTALL BUTTON – shown before install -->
     <button onclick="installApp()" class="installBtn" id="installBtn">
       INSTALL TO HOME SCREEN
     </button>
 
     <div class="steps">
-      <h2>How to Install (30 seconds)</h2>
-      <p><strong>iPhone:</strong> Tap green button → Share → Add to Home Screen</p>
-      <p><strong>Android:</strong> Tap green button → Install</p>
-      <p>After installing, the green button disappears automatically — even on this page!</p>
+      <h2>How to Install (iPhone & Android)</h2>
+      <p><strong>iPhone:</strong> Tap the green button → Share icon → "Add to Home Screen"</p>
+      <p><strong>Android:</strong> Tap the green button → "Install app"</p>
+      <p>After installing, open from your home screen icon for the best experience.</p>
     </div>
 
     <div class="steps">
-      <h2>Backup</h2>
-      <p>Inside the app → tap <strong>“Backup My Data”</strong></p>
+      <h2>Cloud Backup</h2>
+      <p>Your rations are saved to the cloud automatically when logged in.</p>
+      <p>Manual backup: Inside the app → "Backup My Data"</p>
     </div>
 
-    <footer>Questions? Call [Your Name] at [Your Phone]</footer>
+    <footer>
+      Questions?<br>
+      Call [Your Name] at [Your Phone]
+    </footer>
   </div>
 
   <script>
-    // Check if already installed (standalone mode = from home screen)
-    function checkInstalled() {
-      const isInstalled = 
-        window.matchMedia('(display-mode: standalone)').matches || 
-        window.navigator.standalone === true ||
-        window.location.href.includes('?homescreen');   // fallback
+    let deferredPrompt;
 
-      if (isInstalled) {
-        document.getElementById('installBtn').style.display = 'none';
-        document.getElementById('openBtn').style.display = 'block';
-      }
+    // Detect if running from home screen (standalone mode)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                         window.navigator.standalone === true;
+
+    if (isStandalone) {
+      // Auto-redirect to app.html when opened from home screen
+      window.location.href = "app.html";
+    } else {
+      // Show install button if not installed
+      document.getElementById('installBtn').style.display = 'block';
     }
 
-    // Run on load
-    checkInstalled();
-
-    // Android: catch the install prompt
-    let deferredPrompt;
+    // Capture the install prompt (Android mainly)
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
@@ -77,30 +80,27 @@
 
     function installApp() {
       if (deferredPrompt) {
+        // Android Chrome install prompt
         deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(choice => {
+        deferredPrompt.userChoice.then((choice) => {
           if (choice.outcome === 'accepted') {
-            // Instantly hide install button even without refresh
             document.getElementById('installBtn').style.display = 'none';
-            document.getElementById('openBtn').style.display = 'block';
+            document.getElementById('openLink').style.display = 'block';
           }
           deferredPrompt = null;
         });
       } else if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-        alert("Tap the Share button below → then scroll down and tap 'Add to Home Screen'");
+        // iOS instructions
+        alert("Tap the Share button (square with arrow up) below → scroll down → tap 'Add to Home Screen'");
       }
     }
 
-    // iPhone: when they return from home screen, force refresh once to update buttons
-    window.addEventListener('pageshow', (e) => {
-      if (e.persisted || window.navigator.standalone) checkInstalled();
+    // Optional: if user returns from home screen, refresh to update UI
+    window.addEventListener('pageshow', () => {
+      if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+        window.location.href = "app.html";
+      }
     });
-
-    // Final fallback: if they open from home screen icon, redirect straight to app.html
-    if (window.matchMedia('(display-mode: standalone)').matches || 
-        window.navigator.standalone === true) {
-      window.location.href = "app.html";
-    }
   </script>
 </body>
 </html>
