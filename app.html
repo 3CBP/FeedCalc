@@ -8,6 +8,7 @@
   <link rel="apple-touch-icon" href="logo.jpeg">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#1565c0">
+  <!-- Working global Supabase CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <style>
     body{background:#1565c0;color:#fff;font-family:-apple-system,sans-serif;margin:0;padding:0;position:relative;min-height:100vh;padding-bottom:200px;box-sizing:border-box;}
@@ -39,22 +40,7 @@
     .backupPanel{position:fixed;bottom:0;left:0;width:100%;background:rgba(13,71,161,0.95);padding:20px;box-sizing:border-box;text-align:center;z-index:1000;display:none;}
     .backupPanel button{margin:10px auto;display:block;width:90%;max-width:400px;padding:16px;font-size:18px;}
     .logoutBottom{background:#d32f2f !important;color:#fff;}
-    .main-content{padding-bottom:220px;}
-
-    /* Simple bold print sheet */
-    @media print {
-      body {background:#fff !important;color:#000 !important;padding:0 !important;margin:0 !important;}
-      header, .tabs, .backupPanel, button, input, select, #login, #loading, .logo, h1 {display:none !important;}
-      .content, .main-content {display:block !important;padding:0 !important;margin:0 !important;}
-      .feedsheet {background:#fff !important;color:#000 !important;padding:0 !important;border:none !important;box-shadow:none !important;border-radius:0 !important;}
-      .ready, .big {display:none !important;}
-      .loadline {display:flex !important;justify-content:space-between !important;font-size:36px !important;font-weight:bold !important;padding:5px 0 !important;border-bottom:2px solid #000 !important;}
-      .cumulative {font-size:32px !important;font-weight:bold !important;color:#000 !important;text-align:right !important;margin:10px 0 !important;}
-      h2 {font-size:32px !important;font-weight:bold !important;text-align:center !important;margin:20px 0 !important;}
-      [style="text-align:center;font-size:36px;margin:30px 0"] {font-size:28px !important;font-weight:bold !important;margin:15px 0 !important;}
-      [style="text-align:center;margin-top:40px"] {font-size:40px !important;font-weight:bold !important;margin:30px 0 !important;}
-      @page {margin:0.5in;}
-    }
+    .main-content{padding-bottom:220px;} /* space for fixed bottom panel */
   </style>
 </head>
 <body>
@@ -161,7 +147,7 @@ async function save() {
   await supabase.from('customer_data').upsert({ user_id: user.id, data });
 }
 
-supabase.auth.getSession().then(({ data: { session } } }) => {
+supabase.auth.getSession().then(({ data: { session } }) => {
   if (session) loadUserData();
   else {
     document.getElementById('loading').style.display = 'none';
@@ -285,7 +271,7 @@ function addRation(gid) {
 function renameGroup(id, val) { data.groups.find(g=>g.id==id).name = val; save(); renderCalc(); }
 function renameRation(gid, rid, val) { data.groups.find(g=>g.id==gid).rations.find(r=>r.id==rid).name = val; save(); }
 function deleteGroup(id) { if(confirm("Delete entire group?")) { data.groups = data.groups.filter(g=>g.id!=id); save(); renderGroups(); renderCalc(); }}
-function deleteRation(gid, rid) { if(confirm("Delete this ration?")) { const g = data.groups.find(g=>g.id==gid); g.rations = g.rations.filter(r=>r.id==rid); save(); renderGroups(); }}
+function deleteRation(gid, rid) { if(confirm("Delete this ration?")) { const g = data.groups.find(g=>g.id==gid); g.rations = g.rations.filter(r=>r.id!=rid); save(); renderGroups(); }}
 
 function downloadBackup() {
   const a = document.createElement('a');
