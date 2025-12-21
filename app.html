@@ -53,8 +53,6 @@
   <p id="error"></p>
 </div>
 
-<!-- LOG OUT BUTTON REMOVED -->
-
 <div class="backupBtns no-print" id="backupPanel" style="display:none;">
   <button id="backupBtn">Backup My Data</button>
   <button id="restoreBtn">Restore from Backup</button>
@@ -111,15 +109,27 @@
   document.getElementById('printBtn').addEventListener('click', () => window.print());
   document.getElementById('addGroupBtn').addEventListener('click', addGroup);
 
-  // Dynamic buttons (delete ingredient, add ration, delete group, delete ration)
+  // Dynamic buttons listener - properly parse arguments from onclick string
   document.addEventListener('click', e => {
-    if (e.target.classList.contains('del')) {
-      const onclick = e.target.getAttribute('onclick');
-      if (onclick) new Function(onclick)();
-    }
-    if (e.target.tagName === 'BUTTON' && e.target.textContent.trim() === '+ Add Ration') {
-      const onclick = e.target.getAttribute('onclick');
-      if (onclick) new Function(onclick)();
+    if (e.target.matches('.del') || e.target.matches('.add[onclick^="addRation"]')) {
+      const onclickStr = e.target.getAttribute('onclick');
+      if (onclickStr) {
+        // Extract function name and arguments
+        const match = onclickStr.match(/^(\w+)\((.*)\)$/);
+        if (match) {
+          const funcName = match[1];
+          const argStr = match[2];
+          const args = argStr.split(',').map(arg => {
+            arg = arg.trim();
+            if (arg === '' || arg === 'this.value') return arg;
+            const num = parseFloat(arg);
+            return isNaN(num) ? arg : num;
+          });
+          if (typeof window[funcName] === 'function') {
+            window[funcName](...args);
+          }
+        }
+      }
     }
   });
 
