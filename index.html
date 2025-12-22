@@ -11,15 +11,13 @@
   <meta name="theme-color" content="#1565c0">
   <style>
     body{font-family:-apple-system,sans-serif;background:#1565c0;color:white;margin:0;padding:20px;text-align:center;display:flex;align-items:center;justify-content:center;min-height:100vh;}
-    .container{max-width:500px;margin:0 auto;background:rgba(255,255,255,.1);border-radius:20px;padding:40px 30px;width:100%;box-sizing:border-box;}
-    .logo{width:140px;height:140px;border-radius:50%;border:8px solid white;margin:20px auto;display:block;box-shadow:0 10px 30px rgba(0,0,0,0.4);}
-    h1{font-size:32px;margin:20px 0 30px;font-weight:bold;}
-    button{background:#ff9800;color:black;font-weight:bold;padding:20px;font-size:26px;border:none;border-radius:15px;margin:20px auto;cursor:pointer;width:95%;max-width:400px;display:block;box-shadow:0 8px 20px rgba(0,0,0,0.3);}
-    .installBtn{background:#4caf50 !important;color:white !important;}
-    .openBtn{background:#ff9800 !important;font-size:28px !important;padding:24px !important;}
-    .steps{background:rgba(255,255,255,.15);padding:25px;border-radius:15px;margin:30px 0;font-size:18px;line-height:1.7;}
-    .steps h2{font-size:22px;margin:0 0 15px 0;}
-    footer{margin-top:40px;font-size:15px;opacity:0.9;line-height:1.6;}
+    .container{max-width:500px;margin:0 auto;background:rgba(255,255,255,.1);border-radius:20px;padding:50px 30px;width:100%;box-sizing:border-box;}
+    .logo{width:160px;height:160px;border-radius:50%;border:8px solid white;margin:20px auto;display:block;box-shadow:0 15px 40px rgba(0,0,0,0.4);}
+    h1{font-size:36px;margin:30px 0;font-weight:bold;}
+    button{background:#4caf50;color:white;font-weight:bold;padding:24px;font-size:28px;border:none;border-radius:15px;margin:30px auto;cursor:pointer;width:95%;max-width:400px;display:block;box-shadow:0 10px 30px rgba(0,0,0,0.3);}
+    .openBtn{background:#ff9800 !important;}
+    .note{font-size:18px;line-height:1.6;margin:20px 0;opacity:0.9;}
+    footer{margin-top:50px;font-size:16px;opacity:0.8;}
   </style>
 </head>
 <body>
@@ -30,41 +28,16 @@
 
     <!-- OPEN BUTTON – shown when installed / from home screen -->
     <a href="app.html" id="openLink" style="text-decoration:none;display:none;">
-      <button class="openBtn">OPEN THE APP NOW</button>
+      <button class="openBtn">OPEN THE APP</button>
     </a>
 
     <!-- INSTALL BUTTON – shown before install -->
-    <button onclick="installApp()" class="installBtn" id="installBtn">
+    <button onclick="installApp()" id="installBtn">
       INSTALL TO HOME SCREEN
     </button>
 
-    <div class="steps">
-      <h2>How to Install (iPhone & Android)</h2>
-      <p><strong>iPhone:</strong> Tap the green button → Share icon → "Add to Home Screen"</p>
-      <p><strong>Android:</strong> Tap the green button → "Install app"</p>
-      <p>After installing, open from your home screen icon for the best experience.</p>
-    </div>
-
-    <div class="steps">
-      <h2>How to Use the TMR Calculator</h2>
-      <p><strong>1. Set up Groups & Rations (one-time)</strong><br>
-      Tap <strong>Groups & Rations</strong> tab → + ADD GROUP → name it (e.g., High Group)<br>
-      Then + Add Ration under the group (e.g., Standard)</p>
-
-      <p><strong>2. Add ingredients</strong><br>
-      Go to Calculator tab → select Group & Ration → tap + Add Ingredient → type feed name</p>
-
-      <p><strong>3. Make a daily batch</strong><br>
-      Select Group → Ration → enter number of cows → fill lbs per cow → GENERATE BATCH SHEET</p>
-
-      <p><strong>4. Print</strong><br>
-      Tap PRINT SHEET for a clean one-page loading order (bold text, cumulatives, total)</p>
-
-      <p><strong>Backup</strong><br>
-      At bottom → "Backup My Data" (download file) or it's auto-saved to cloud when logged in</p>
-
-      <p>That's it — daily batches in under a minute!</p>
-    </div>
+    <p class="note">Add this app to your phone for quick daily TMR batches.<br>
+    Works offline once installed.</p>
 
     <footer>
       Questions?<br>
@@ -100,7 +73,7 @@
           deferredPrompt = null;
         });
       } else if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-        alert("Tap the Share button (square with arrow up) below → scroll down → tap 'Add to Home Screen'");
+        alert("Tap the Share button (square with arrow up) → scroll down → 'Add to Home Screen'");
       }
     }
 
