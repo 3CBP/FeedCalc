@@ -38,7 +38,7 @@
     #error{color:#ff5252;margin-top:15px;display:none;}
     .main-content{padding:0 20px 100px;max-width:800px;margin:0 auto;}
 
-    /* BOTTOM DROPDOWN MENU BELOW PRINT SHEET */
+    /* MENU BELOW PRINT SHEET */
     .menuTrigger{margin:20px auto;width:90%;max-width:400px;background:#2196f3 !important;color:white;font-size:20px;padding:16px;}
     .menuDropdown{background:#0d47a1;padding:15px;border-radius:12px;margin:10px auto;width:90%;max-width:400px;box-shadow:0 10px 30px rgba(0,0,0,0.5);display:none;}
     .menuDropdown button{display:block;width:100%;margin:10px 0;padding:14px;font-size:18px;background:#ff9800;color:black;border-radius:8px;}
@@ -93,12 +93,11 @@
     <button onclick="window.print()">PRINT SHEET</button>
     <div id="result" class="result"></div>
 
-    <!-- MENU TRIGGER BELOW PRINT SHEET -->
+    <!-- MENU BELOW PRINT SHEET -->
     <button class="menuTrigger" onclick="toggleMenu()">TOOLS & HELP ▼</button>
 
-    <!-- DROPDOWN MENU BELOW TRIGGER -->
     <div class="menuDropdown" id="menuDropdown">
-      <button onclick="window.location.href='index.html'">HELP & INSTRUCTIONS</button>
+      <button onclick="window.location.href='help.html'">HELP & INSTRUCTIONS</button>
       <button onclick="downloadBackup()">Backup My Data</button>
       <button onclick="document.getElementById('restoreFile').click()">Restore from Backup</button>
       <button class="logout" onclick="logout()">LOG OUT</button>
@@ -134,8 +133,6 @@ document.addEventListener('click', (e) => {
     menu.style.display = 'none';
   }
 });
-
-// (rest of your script — login, logout, loadUserData, save, etc. — unchanged from perfect version)
 
 async function login() {
   const { error } = await supabase.auth.signInWithPassword({
