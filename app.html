@@ -11,7 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <style>
     body{background:#1565c0;color:#fff;font-family:-apple-system,sans-serif;margin:0;padding:0;position:relative;min-height:100vh;box-sizing:border-box;}
-    header{text-align:center;padding:20px;background:#0d47a1;margin:0;position:relative;}
+    header{text-align:center;padding:20px;background:#0d47a1;margin:0;}
     .logo{width:80px;height:80px;border-radius:50%;border:4px solid #fff;}
     h1{margin:10px 0;font-size:28px;}
     .tabs{display:flex;gap:10px;margin:20px 0 20px;justify-content:center;}
@@ -36,12 +36,12 @@
     #login input{width:80%;max-width:340px;padding:16px;margin:12px;font-size:22px;border-radius:12px;text-align:center;}
     #login button{padding:18px 50px;font-size:22px;background:#ff9800;border:none;border-radius:12px;}
     #error{color:#ff5252;margin-top:15px;display:none;}
-    .main-content{padding:0 20px 60px;max-width:800px;margin:0 auto;}
+    .main-content{padding:0 20px 100px;max-width:800px;margin:0 auto;}
 
-    /* TOP LEFT MENU */
-    .menuBtn{position:absolute;top:15px;left:15px;background:transparent;border:none;color:white;font-size:32px;cursor:pointer;z-index:1001;padding:10px;}
-    .menuDropdown{position:absolute;top:70px;left:15px;background:#0d47a1;padding:15px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);display:none;z-index:1000;width:240px;}
-    .menuDropdown button{display:block;width:100%;margin:10px 0;padding:14px;font-size:18px;background:#ff9800;color:black;border-radius:8px;box-sizing:border-box;}
+    /* BOTTOM DROPDOWN MENU BELOW PRINT SHEET */
+    .menuTrigger{margin:20px auto;width:90%;max-width:400px;background:#2196f3 !important;color:white;font-size:20px;padding:16px;}
+    .menuDropdown{background:#0d47a1;padding:15px;border-radius:12px;margin:10px auto;width:90%;max-width:400px;box-shadow:0 10px 30px rgba(0,0,0,0.5);display:none;}
+    .menuDropdown button{display:block;width:100%;margin:10px 0;padding:14px;font-size:18px;background:#ff9800;color:black;border-radius:8px;}
     .menuDropdown .logout{background:#d32f2f !important;color:white;}
 
     /* CLEAN ONE-PAGE PRINT SHEET */
@@ -74,7 +74,6 @@
 
 <div class="main-content">
   <header>
-    <button class="menuBtn" onclick="toggleMenu()">☰</button>
     <img src="logo.jpeg" class="logo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iMzYiIGZpbGw9IiNmZmYiIHN0cm9rZT0iI2ZmOTgwMCIgc3Ryb2tlLXdpZHRoPSI4Ii8+CiI8L3N2Zz4K';">
     <h1>Dairy TMR Calculator</h1>
   </header>
@@ -93,6 +92,17 @@
     <button onclick="calculate()">GENERATE BATCH SHEET</button>
     <button onclick="window.print()">PRINT SHEET</button>
     <div id="result" class="result"></div>
+
+    <!-- MENU TRIGGER BELOW PRINT SHEET -->
+    <button class="menuTrigger" onclick="toggleMenu()">TOOLS & HELP ▼</button>
+
+    <!-- DROPDOWN MENU BELOW TRIGGER -->
+    <div class="menuDropdown" id="menuDropdown">
+      <button onclick="window.location.href='index.html'">HELP & INSTRUCTIONS</button>
+      <button onclick="downloadBackup()">Backup My Data</button>
+      <button onclick="document.getElementById('restoreFile').click()">Restore from Backup</button>
+      <button class="logout" onclick="logout()">LOG OUT</button>
+    </div>
   </div>
 
   <div id="groups" class="content">
@@ -102,13 +112,6 @@
   </div>
 </div>
 
-<!-- TOP LEFT DROPDOWN MENU -->
-<div class="menuDropdown" id="menuDropdown">
-  <button onclick="window.location.href='index.html'">HELP & INSTRUCTIONS</button>
-  <button onclick="downloadBackup()">Backup My Data</button>
-  <button onclick="document.getElementById('restoreFile').click()">Restore from Backup</button>
-  <button class="logout" onclick="logout()">LOG OUT</button>
-</div>
 <input type="file" id="restoreFile" style="display:none" accept=".json" onchange="restoreBackup(event)">
 
 <script>
@@ -124,14 +127,15 @@ function toggleMenu() {
   menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
 }
 
-// Close menu when tapping outside
 document.addEventListener('click', (e) => {
   const menu = document.getElementById('menuDropdown');
-  const btn = document.querySelector('.menuBtn');
-  if (!menu.contains(e.target) && !btn.contains(e.target)) {
+  const trigger = document.querySelector('.menuTrigger');
+  if (!menu.contains(e.target) && !trigger.contains(e.target)) {
     menu.style.display = 'none';
   }
 });
+
+// (rest of your script — login, logout, loadUserData, save, etc. — unchanged from perfect version)
 
 async function login() {
   const { error } = await supabase.auth.signInWithPassword({
