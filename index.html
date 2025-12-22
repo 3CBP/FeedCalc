@@ -46,9 +46,24 @@
     </div>
 
     <div class="steps">
-      <h2>Cloud Backup</h2>
-      <p>Your rations are saved to the cloud automatically when logged in.</p>
-      <p>Manual backup: Inside the app → "Backup My Data"</p>
+      <h2>How to Use the TMR Calculator</h2>
+      <p><strong>1. Set up Groups & Rations (one-time)</strong><br>
+      Tap <strong>Groups & Rations</strong> tab → + ADD GROUP → name it (e.g., High Group)<br>
+      Then + Add Ration under the group (e.g., Standard)</p>
+
+      <p><strong>2. Add ingredients</strong><br>
+      Go to Calculator tab → select Group & Ration → tap + Add Ingredient → type feed name</p>
+
+      <p><strong>3. Make a daily batch</strong><br>
+      Select Group → Ration → enter number of cows → fill lbs per cow → GENERATE BATCH SHEET</p>
+
+      <p><strong>4. Print</strong><br>
+      Tap PRINT SHEET for a clean one-page loading order (bold text, cumulatives, total)</p>
+
+      <p><strong>Backup</strong><br>
+      At bottom → "Backup My Data" (download file) or it's auto-saved to cloud when logged in</p>
+
+      <p>That's it — daily batches in under a minute!</p>
     </div>
 
     <footer>
@@ -60,19 +75,15 @@
   <script>
     let deferredPrompt;
 
-    // Detect if running from home screen (standalone mode)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                          window.navigator.standalone === true;
 
     if (isStandalone) {
-      // Auto-redirect to app.html when opened from home screen
       window.location.href = "app.html";
     } else {
-      // Show install button if not installed
       document.getElementById('installBtn').style.display = 'block';
     }
 
-    // Capture the install prompt (Android mainly)
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
@@ -80,7 +91,6 @@
 
     function installApp() {
       if (deferredPrompt) {
-        // Android Chrome install prompt
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then((choice) => {
           if (choice.outcome === 'accepted') {
@@ -90,12 +100,10 @@
           deferredPrompt = null;
         });
       } else if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-        // iOS instructions
         alert("Tap the Share button (square with arrow up) below → scroll down → tap 'Add to Home Screen'");
       }
     }
 
-    // Optional: if user returns from home screen, refresh to update UI
     window.addEventListener('pageshow', () => {
       if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
         window.location.href = "app.html";
