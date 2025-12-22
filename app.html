@@ -32,10 +32,13 @@
     .big{font-size:70px;color:#ff9800;}
     .ready{background:#d32f2f;color:#fff;padding:25px;font-size:40px;text-align:center;border-radius:15px;animation:glow 1.5s infinite;}
     @keyframes glow{0%,100%{box-shadow:0 0 30px #f00;}50%{box-shadow:0 0 60px #f00;}}
-    #login,#loading{position:fixed;top:0;left:0;width:100%;height:100%;background:#0d47a1;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;}
-    #login input{width:80%;max-width:340px;padding:16px;margin:12px;font-size:22px;border-radius:12px;text-align:center;}
-    #login button{padding:18px 50px;font-size:22px;background:#ff9800;border:none;border-radius:12px;}
-    #error{color:#ff5252;margin-top:15px;display:none;}
+    #login,#loading{position:fixed;top:0;left:0;width:100%;height:100%;background:#0d47a1;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:20px;box-sizing:border-box;}
+    #login .card{max-width:380px;width:100%;background:rgba(255,255,255,0.1);border-radius:20px;padding:40px 30px;box-shadow:0 15px 40px rgba(0,0,0,0.4);text-align:center;}
+    #login h2{font-size:34px;margin:0 0 30px;font-weight:bold;}
+    #login p{font-size:20px;line-height:1.7;margin:20px 0;opacity:0.95;}
+    #login input{width:100%;max-width:340px;padding:18px;margin:15px 0;font-size:24px;border-radius:12px;text-align:center;box-sizing:border-box;}
+    #login button{padding:20px 50px;font-size:26px;background:#ff9800;border:none;border-radius:12px;margin-top:20px;}
+    #error{color:#ff5252;margin-top:20px;font-size:18px;display:none;}
     .main-content{padding:0 20px 100px;max-width:800px;margin:0 auto;}
 
     /* MENU BELOW PRINT SHEET */
@@ -65,19 +68,21 @@
 <div id="loading"><h2>Loading…</h2></div>
 
 <div id="login" style="display:none;">
-  <h2>Dairy TMR Calculator</h2>
-  <p style="font-size:18px;margin:30px 0 40px;line-height:1.6;max-width:340px;">
-    Welcome! This app requires an account for secure cloud backup.<br><br>
-    <strong>New user?</strong> Contact me for your<br>
-    <strong>30-day free trial account</strong>:<br><br>
-    Call/Text: <strong>[Your Phone]</strong><br>
-    Email: <a href="mailto:[your@email.com]" style="color:#ff9800;text-decoration:underline;">[your@email.com]</a><br><br>
-    I'll set you up in minutes!
-  </p>
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="pass" placeholder="Password">
-  <button onclick="login()">SIGN IN</button>
-  <p id="error"></p>
+  <div class="card">
+    <h2>Dairy TMR Calculator</h2>
+    <p>
+      Welcome! This app requires an account for secure cloud backup.<br><br>
+      <strong>New user?</strong> Contact me for your<br>
+      <strong>30-day free trial account</strong>:<br><br>
+      Call/Text: <strong>[Your Phone]</strong><br>
+      Email: <a href="mailto:[your@email.com]" style="color:#ff9800;text-decoration:underline;">[your@email.com]</a><br><br>
+      I'll set you up in minutes!
+    </p>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="pass" placeholder="Password">
+    <button onclick="login()">SIGN IN</button>
+    <p id="error"></p>
+  </div>
 </div>
 
 <div class="main-content">
