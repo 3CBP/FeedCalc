@@ -1,1 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Help - Dairy TMR Calculator</title>
+  <meta name="theme-color" content="#1565c0">
+  <style>
+    body{font-family:-apple-system,sans-serif;background:#1565c0;color:white;margin:0;padding:20px;text-align:center;}
+    .container{max-width:600px;margin:0 auto;background:rgba(255,255,255,.1);border-radius:20px;padding:40px;}
+    .logo{width:120px;height:120px;border-radius:50%;border:6px solid white;margin:20px auto;display:block;}
+    h1{font-size:32px;margin:20px 0;}
+    .steps{background:rgba(255,255,255,.15);padding:25px;border-radius:15px;margin:30px 0;font-size:18px;line-height:1.7;text-align:left;}
+    .steps h2{font-size:22px;margin:0 0 15px 0;text-align:center;}
+    button{background:#ff9800;color:black;font-weight:bold;padding:20px;font-size:24px;border:none;border-radius:15px;margin:20px;width:90%;max-width:400px;cursor:pointer;}
+    footer{margin-top:40px;font-size:15px;opacity:0.9;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="logo.jpeg" class="logo" alt="Logo" onerror="this.style.display='none'">
+    <h1>How to Use the TMR Calculator</h1>
 
+    <div class="steps">
+      <h2>1. Set Up Groups & Rations (one-time)</h2>
+      <p>Tap the <strong>Groups & Rations</strong> tab</p>
+      <p>• Tap <strong>+ ADD GROUP</strong> → type name (e.g., High Group)</p>
+      <p>• Under the group, tap <strong>+ Add Ration</strong> → type name (e.g., Standard)</p>
+      <p>• Go back to Calculator tab → select Group & Ration → tap <strong>+ Add Ingredient</strong> to add feeds</p>
+    </div>
+
+    <div class="steps">
+      <h2>2. Make a Daily Batch</h2>
+      <p>Tap the <strong>Calculator</strong> tab</p>
+      <p>• Choose Group</p>
+      <p>• Choose Ration</p>
+      <p>• Enter number of cows</p>
+      <p>• Fill in lbs per cow for each ingredient</p>
+      <p>• Tap <strong>GENERATE BATCH SHEET</strong></p>
+    </div>
+
+    <div class="steps">
+      <h2>3. Print the Loading Order</h2>
+      <p>Tap <strong>PRINT SHEET</strong></p>
+      <p>It prints a clean one-page sheet with bold ingredients, cumulatives, and total weight — perfect for the mixer.</p>
+    </div>
+
+    <div class="steps">
+      <h2>4. Backup</h2>
+      <p>Your data saves to the cloud automatically when logged in.</p>
+      <p>For extra safety: Tap Tools & Help → Backup My Data → save the file.</p>
+    </div>
+
+    <button onclick="window.location.href='app.html'">BACK TO CALCULATOR</button>
+
+    <footer>
+      Questions?<br>
+      Call [Your Name] at [Your Phone]
+    </footer>
+  </div>
+</body>
+</html>
