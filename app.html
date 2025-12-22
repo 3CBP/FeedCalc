@@ -10,12 +10,12 @@
   <meta name="theme-color" content="#1565c0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <style>
-    body{background:#1565c0;color:#fff;font-family:-apple-system,sans-serif;margin:0;padding:0;position:relative;min-height:100vh;padding-bottom:60px;box-sizing:border-box;}
+    body{background:#1565c0;color:#fff;font-family:-apple-system,sans-serif;margin:0;padding:0;position:relative;min-height:100vh;box-sizing:border-box;}
     header{text-align:center;padding:20px;background:#0d47a1;margin:0;position:relative;}
     .logo{width:80px;height:80px;border-radius:50%;border:4px solid #fff;}
     h1{margin:10px 0;font-size:28px;}
-    .tabs{display:flex;gap:10px;margin:20px 0 20px;}
-    .tab{flex:1;padding:15px;background:rgba(255,255,255,.2);text-align:center;border-radius:8px;cursor:pointer;font-weight:bold;}
+    .tabs{display:flex;gap:10px;margin:20px 0 20px;justify-content:center;}
+    .tab{flex:1;max-width:300px;padding:15px;background:rgba(255,255,255,.2);text-align:center;border-radius:8px;cursor:pointer;font-weight:bold;}
     .tab.active{background:#fff;color:#0d47a1;}
     .content{display:none;padding:10px;}
     .content.active{display:block;}
@@ -36,14 +36,13 @@
     #login input{width:80%;max-width:340px;padding:16px;margin:12px;font-size:22px;border-radius:12px;text-align:center;}
     #login button{padding:18px 50px;font-size:22px;background:#ff9800;border:none;border-radius:12px;}
     #error{color:#ff5252;margin-top:15px;display:none;}
-    .main-content{padding-bottom:60px;}
+    .main-content{padding:0 20px 60px;max-width:800px;margin:0 auto;}
 
     /* TOP LEFT MENU */
-    .menuBtn{position:absolute;top:15px;left:15px;background:#0d47a1;border:none;color:white;font-size:32px;cursor:pointer;z-index:1001;padding:10px;border-radius:8px;}
-    .menuDropdown{position:absolute;top:70px;left:15px;background:#0d47a1;padding:15px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);display:none;z-index:1000;width:220px;}
-    .menuDropdown button{display:block;width:100%;margin:10px 0;padding:14px;font-size:18px;background:#ff9800;color:black;border-radius:8px;}
+    .menuBtn{position:absolute;top:15px;left:15px;background:transparent;border:none;color:white;font-size:32px;cursor:pointer;z-index:1001;padding:10px;}
+    .menuDropdown{position:absolute;top:70px;left:15px;background:#0d47a1;padding:15px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);display:none;z-index:1000;width:240px;}
+    .menuDropdown button{display:block;width:100%;margin:10px 0;padding:14px;font-size:18px;background:#ff9800;color:black;border-radius:8px;box-sizing:border-box;}
     .menuDropdown .logout{background:#d32f2f !important;color:white;}
-    .main-content{padding-left:70px;} /* space for menu */
 
     /* CLEAN ONE-PAGE PRINT SHEET */
     @media print {
@@ -120,10 +119,9 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let data = { groups: [] };
 
-// Toggle menu
 function toggleMenu() {
   const menu = document.getElementById('menuDropdown');
-  menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+  menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
 }
 
 // Close menu when tapping outside
@@ -134,8 +132,6 @@ document.addEventListener('click', (e) => {
     menu.style.display = 'none';
   }
 });
-
-// (rest of your script — login, loadUserData, save, etc. — unchanged)
 
 async function login() {
   const { error } = await supabase.auth.signInWithPassword({
@@ -190,8 +186,6 @@ supabase.auth.getSession().then(({ data: { session } }) => {
     document.getElementById('login').style.display = 'flex';
   }
 });
-
-// (all other functions — openTab, renderCalc, etc. — unchanged from your perfect version)
 
 function openTab(t) {
   document.querySelectorAll('.tab,.content').forEach(e => e.classList.remove('active'));
