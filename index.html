@@ -10,13 +10,17 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#1565c0">
   <style>
-    body{font-family:-apple-system,sans-serif;background:#1565c0;color:white;margin:0;padding:20px;text-align:center;display:flex;align-items:center;justify-content:center;min-height:100vh;}
-    .container{max-width:500px;margin:0 auto;background:rgba(255,255,255,.1);border-radius:20px;padding:50px 30px;width:100%;box-sizing:border-box;}
+    body{font-family:-apple-system,sans-serif;background:#1565c0;color:white;margin:0;padding:20px;text-align:center;}
+    .container{max-width:500px;margin:0 auto;background:rgba(255,255,255,.1);border-radius:20px;padding:40px 30px;}
     .logo{width:160px;height:160px;border-radius:50%;border:8px solid white;margin:20px auto;display:block;box-shadow:0 15px 40px rgba(0,0,0,0.4);}
-    h1{font-size:36px;margin:30px 0;font-weight:bold;}
+    h1{font-size:36px;margin:30px 0 20px;font-weight:bold;}
+    .tagline{font-size:22px;margin:20px 0;line-height:1.5;opacity:0.95;}
+    .trial{font-size:24px;background:#ff9800;color:black;padding:15px;border-radius:12px;margin:30px 0;font-weight:bold;}
     button{background:#4caf50;color:white;font-weight:bold;padding:24px;font-size:28px;border:none;border-radius:15px;margin:30px auto;cursor:pointer;width:95%;max-width:400px;display:block;box-shadow:0 10px 30px rgba(0,0,0,0.3);}
     .openBtn{background:#ff9800 !important;}
-    .note{font-size:18px;line-height:1.6;margin:20px 0;opacity:0.9;}
+    .features{margin:30px 0;}
+    .feature{margin:20px 0;font-size:18px;line-height:1.6;}
+    .feature strong{color:#ff9800;}
     footer{margin-top:50px;font-size:16px;opacity:0.8;}
   </style>
 </head>
@@ -25,19 +29,40 @@
   <div class="container">
     <img src="logo.jpeg" class="logo" alt="Farm Logo" onerror="this.style.display='none'">
     <h1>Dairy TMR Calculator</h1>
+    <p class="tagline">Precision feeding made simple — accurate batches every load.</p>
 
-    <!-- OPEN BUTTON – shown when installed / from home screen -->
+    <div class="trial">
+      ★ 30-Day Free Trial — No Credit Card Required ★
+    </div>
+
+    <!-- OPEN BUTTON – shown when installed -->
     <a href="app.html" id="openLink" style="text-decoration:none;display:none;">
       <button class="openBtn">OPEN THE APP</button>
     </a>
 
     <!-- INSTALL BUTTON – shown before install -->
     <button onclick="installApp()" id="installBtn">
-      INSTALL TO HOME SCREEN
+      START YOUR FREE TRIAL
     </button>
 
-    <p class="note">Add this app to your phone for quick daily TMR batches.<br>
-    Works offline once installed.</p>
+    <div class="features">
+      <div class="feature">
+        <strong>Perfect Batches</strong><br>
+        Cumulative totals and clean loading order — no math mistakes.
+      </div>
+      <div class="feature">
+        <strong>Cloud Backup</strong><br>
+        Your rations saved securely — access from any device.
+      </div>
+      <div class="feature">
+        <strong>One-Tap Printing</strong><br>
+        Bold, one-page sheet ready for the mixer cab.
+      </div>
+      <div class="feature">
+        <strong>Works Offline</strong><br>
+        Install once — use anywhere on the farm.
+      </div>
+    </div>
 
     <footer>
       Questions?<br>
