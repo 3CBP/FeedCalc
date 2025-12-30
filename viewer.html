@@ -1,1 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Read-Only Ration Viewer - Dairy TMR Calculator</title>
+  <meta name="theme-color" content="#1565c0">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <style>
+    body {font-family:-apple-system,sans-serif;background:#1565c0;color:#fff;margin:0;padding:20px;text-align:center;}
+    .container {max-width:800px;margin:0 auto;background:rgba(255,255,255,0.1);border-radius:20px;padding:40px;box-shadow:0 10px 30px rgba(0,0,0,0.4);}
+    h1 {font-size:32px;margin:20px 0;}
+    table {width:100%;border-collapse:collapse;margin:30px 0;background:#fff;color:#000;border-radius:12px;overflow:hidden;}
+    th, td {padding:12px;border-bottom:1px solid #ddd;text-align:left;}
+    th {background:#0d47a1;color:white;}
+    tr:hover {background:#f5f5f5;}
+    input, button {width:100%;max-width:400px;padding:16px;margin:15px 0;font-size:18px;border-radius:12px;box-sizing:border-box;}
+    button {background:#ff9800;color:black;font-weight:bold;cursor:pointer;}
+    #error {color:#ff5252;margin:10px 0;font-size:18px;display:none;}
+    #logout {margin-top:30px;background:#d32f2f;color:white;}
+  </style>
+</head>
+<body>
 
+<div class="container">
+  <h1>Read-Only Ration Viewer</h1>
+  <p>This is a view-only page. You can see ingredient amounts, but cannot make changes.</p>
+
+  <!-- Login Form -->
+  <div id="login-form">
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="pass" placeholder="Password">
+    <button onclick="login()">LOG IN TO VIEW</button>
+    <p id="error"></p>
+  </div>
+
+  <!-- Viewer Table (hidden until logged in) -->
+  <div id="viewer-content" style="display:none;">
+    <table id="ingredients-table">
+      <thead>
+        <tr>
+          <th>Group</th>
+          <th>Ration</th>
+          <th>Ingredient</th>
+          <th>Lbs per Cow</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button id="logout" onclick="logout()">LOG OUT</button>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://wrgizzneqlhwwglhggbt.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZ2l6em5lcWxod3dnbGhnZ2J0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1MzE1NzQsImV4cCI6MjA4MDEwNzU3NH0.M2g7er3EK-To7nTYGiVoN8LC1roBG9fdgmjlS9j9qP8";
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function login() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('pass').value;
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    document.getElementById('error').textContent = error.message;
+    document.getElementById('error').style.display = 'block';
+  } else {
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('viewer-content').style.display = 'block';
+    loadData();
+  }
+}
+
+async function logout() {
+  await supabase.auth.signOut();
+  location.reload();
+}
+
+async function loadData() {
+  const { data, error } = await supabase
+    .from('shared_ration_ingredients')
+    .select('group_name, ration_name, ingredient_name, lbs_per_cow')
+    .order('ration_name', { ascending: true });
+
+  if (error) {
+    console.error(error);
+    alert("Error loading data: " + error.message);
+    return;
+  }
+
+  const tbody = document.querySelector('#ingredients-table tbody');
+  tbody.innerHTML = ''; // Clear previous rows
+
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No rations found.</td></tr>';
+    return;
+  }
+
+  data.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.group_name || '-'}</td>
+      <td>${row.ration_name || '-'}</td>
+      <td>${row.ingredient_name || '-'}</td>
+      <td>${row.lbs_per_cow ? row.lbs_per_cow.toFixed(1) : '-'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+</script>
+</body>
+</html>
