@@ -8,14 +8,14 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <style>
     body {font-family:-apple-system,sans-serif;background:#1565c0;color:#fff;margin:0;padding:20px;text-align:center;}
-    .container {max-width:800px;margin:0 auto;background:rgba(255,255,255,0.1);border-radius:20px;padding:40px;box-shadow:0 10px 30px rgba(0,0,0,0.4);}
+    .container {max-width:900px;margin:0 auto;background:rgba(255,255,255,0.1);border-radius:20px;padding:40px;box-shadow:0 10px 30px rgba(0,0,0,0.4);}
     h1 {font-size:32px;margin:20px 0;}
+    select, button {padding:12px;font-size:18px;border-radius:8px;margin:15px;}
+    button {background:#ff9800;color:black;font-weight:bold;cursor:pointer;}
     table {width:100%;border-collapse:collapse;margin:30px 0;background:#fff;color:#000;border-radius:12px;overflow:hidden;}
     th, td {padding:12px;border-bottom:1px solid #ddd;text-align:left;}
     th {background:#0d47a1;color:white;}
     tr:hover {background:#f5f5f5;}
-    input, button {width:100%;max-width:400px;padding:16px;margin:15px 0;font-size:18px;border-radius:12px;box-sizing:border-box;}
-    button {background:#ff9800;color:black;font-weight:bold;cursor:pointer;}
     #error {color:#ff5252;margin:10px 0;font-size:18px;display:none;}
     #logout {margin-top:30px;background:#d32f2f;color:white;}
   </style>
@@ -24,7 +24,7 @@
 
 <div class="container">
   <h1>Read-Only Ration Viewer</h1>
-  <p>This is a view-only page. You can see ingredient amounts, but cannot make changes.</p>
+  <p>This is view-only. Select a farm to see ingredient amounts (lbs per cow) per ration.</p>
 
   <!-- Login Form -->
   <div id="login-form">
@@ -34,8 +34,13 @@
     <p id="error"></p>
   </div>
 
-  <!-- Viewer Table (hidden until logged in) -->
+  <!-- Viewer Content (hidden until logged in) -->
   <div id="viewer-content" style="display:none;">
+    <label for="farm-select">Select Farm:</label>
+    <select id="farm-select" onchange="loadData()">
+      <option value="">-- Choose a Farm --</option>
+    </select>
+
     <table id="ingredients-table">
       <thead>
         <tr>
@@ -47,6 +52,7 @@
       </thead>
       <tbody></tbody>
     </table>
+
     <button id="logout" onclick="logout()">LOG OUT</button>
   </div>
 </div>
@@ -60,14 +66,14 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 async function login() {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('pass').value;
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data: { user }, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
     document.getElementById('error').textContent = error.message;
     document.getElementById('error').style.display = 'block';
   } else {
     document.getElementById('login-form').style.display = 'none';
     document.getElementById('viewer-content').style.display = 'block';
-    loadData();
+    await loadFarmList();
   }
 }
 
@@ -76,10 +82,45 @@ async function logout() {
   location.reload();
 }
 
+async function loadFarmList() {
+  const { data: farms, error } = await supabase
+    .from('farm_access')
+    .select('farm_user_id')
+    .eq('nutritionist_id', supabase.auth.user().id);
+
+  if (error) {
+    console.error(error);
+    alert("Error loading farms: " + error.message);
+    return;
+  }
+
+  const select = document.getElementById('farm-select');
+  select.innerHTML = '<option value="">-- Choose a Farm --</option>';
+
+  if (farms.length === 0) {
+    select.innerHTML += '<option disabled>No farms assigned yet</option>';
+    return;
+  }
+
+  farms.forEach(farm => {
+    const option = document.createElement('option');
+    option.value = farm.farm_user_id;
+    option.textContent = `Farm ${farm.farm_user_id.substring(0,8)}...`; // Show short ID; you can improve with farm name later
+    select.appendChild(option);
+  });
+}
+
 async function loadData() {
+  const selectedFarm = document.getElementById('farm-select').value;
+  if (!selectedFarm) {
+    document.querySelector('#ingredients-table tbody').innerHTML = '<tr><td colspan="4">Select a farm to view data</td></tr>';
+    return;
+  }
+
   const { data, error } = await supabase
     .from('shared_ration_ingredients')
     .select('group_name, ration_name, ingredient_name, lbs_per_cow')
+    .eq('owner_id', selectedFarm)
     .order('ration_name', { ascending: true });
 
   if (error) {
@@ -89,10 +130,10 @@ async function loadData() {
   }
 
   const tbody = document.querySelector('#ingredients-table tbody');
-  tbody.innerHTML = ''; // Clear previous rows
+  tbody.innerHTML = '';
 
   if (data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No rations found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4">No rations found for this farm</td></tr>';
     return;
   }
 
