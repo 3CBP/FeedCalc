@@ -70,13 +70,13 @@
 <div id="login" style="display:none;">
   <div class="card">
     <h2>Dairy TMR Calculator</h2>
-    <p>
+    <p style="font-size:18px;margin:30px 0 40px;line-height:1.7;max-width:340px;">
       Welcome! This app requires an account for secure cloud backup.<br><br>
       <strong>New user?</strong> Contact me for your<br>
       <strong>30-day free trial account</strong>:<br><br>
-      Text: <strong>270-670-5759</strong><br>
-      Email: <a href="mailto:pedendairy@gmail.com" style="color:#ff9800;text-decoration:underline;">pedendairy@gmail.com</a><br><br>
-      I'll get you set up!
+      Call/Text: <strong>[Your Phone]</strong><br>
+      Email: <a href="mailto:[your@email.com]" style="color:#ff9800;text-decoration:underline;">[your@email.com]</a><br><br>
+      I'll set you up in minutes!
     </p>
     <input type="email" id="email" placeholder="Email">
     <input type="password" id="pass" placeholder="Password">
@@ -148,12 +148,23 @@ document.addEventListener('click', (e) => {
 });
 
 async function login() {
-  const { error } = await supabase.auth.signInWithPassword({
-    email: document.getElementById('email').value.trim(),
-    password: document.getElementById('pass').value
-  });
-  if (error) showError(error.message);
-  else await loadUserData();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('pass').value;
+  const { data: { user }, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    document.getElementById('error').textContent = error.message;
+    document.getElementById('error').style.display = 'block';
+  } else {
+    // ROLE CHECK: Redirect nutritionists/viewers to viewer.html
+    if (user && (user.email.includes('@nutrition') || user.email.includes('viewer') || user.email.includes('consult'))) {
+      window.location.href = 'viewer.html'; // Auto-redirect to read-only viewer
+    } else {
+      // Normal farmer/user flow
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('login').style.display = 'none';
+      await loadUserData();
+    }
+  }
 }
 
 function showError(msg) {
@@ -201,6 +212,7 @@ supabase.auth.getSession().then(({ data: { session } }) => {
   }
 });
 
+// (rest of your original functions unchanged: openTab, renderCalc, calculate, etc.)
 function openTab(t) {
   document.querySelectorAll('.tab,.content').forEach(e => e.classList.remove('active'));
   document.querySelector(`[onclick="openTab('${t}')"]`).classList.add('active');
